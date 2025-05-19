@@ -1,47 +1,24 @@
-\chapter{Introduction}
-The most significant discernable feature of a
-three-dimensional object is the shape of its surface. For the digital
-processing, manipulation and storage of surface data, a variety of
-representations are used, most notably polygon meshes where the object surface
-is approximated by a network of a finite number of polygons. Polygon meshes,
-especially triangle meshes, are ubiquitous in geometry processing and rendering
-and are a common interchange format between different applications and
-algorithms.
+\chapter{Introduction}\label{ch:introduction}
+Reconstructing curved surfaces from point clouds is a well-studied problem in the field of computer graphics, as point clouds are widely used to represent 3D shapes due to the ease of obtaining point cloud data (via scanning). It refers to the process of converting a discrete set of points in 3D space to another representation for two-dimensional manifolds, such as a mesh or an implicit function. Such an underdetermined process is inherently uncertain. Moreover, often the captured 3D geometry is noisy and sparse or incomplete due to limited sensor resolution, viewing angle, and occlusion, leading to further uncertainty. It is crucial to reconstruct the incomplete 3D shape in its entirety for a better understanding of 3D shapes or scenes, and for various downstream tasks such as simulation, next-view planning, grasping, path planning, collision detection, and so on. 
 
-\begin{figure}[htb]
-  \begin{center}
-  \includegraphics[width=6cm]{figures/krabby-patty}
-  \end{center}
-  \caption{The original Krabby Patty manufactured using the standard approach.
-    (Figure courtesy of Nickelodeon Animation Studios.)}
-\end{figure}
+Many learning-based methods~\cite{PCN, PoinTr, PointAttN, P2C, VarPCN, PCNSkip, Snowflake} implemented point cloud completion for a given incomplete point cloud by predicting the missing points or the complete point cloud. Such a deterministic one-to-one mapping is restrictive in terms of diverse completion since one incomplete shape can be completed in many different ways, leading to various geometries. To address this issue, certain works have introduced different generative model-based strategies~\cite{HyperPocket, CGAN, PCCIMLE, EBResLT} to generate multiple complete point clouds for a given partial point cloud as input. For supervised point completion, generating multiple shapes from a single partial shape is difficult, since we only have one complete ground truth shape available for each partial input during training.~\cite{CGAN} addressed this issue by using a conditional generative adversarial network (GAN) to generate multiple complete clouds during inference. But because of mode collapse in GANs~\cite{ModeCollapseGAN}, generated shapes are often not geometrically diverse and differ only in simpler aspects such as length or width.~\cite{PCCIMLE} used implicit maximum likelihood estimation (IMLE) introduced in~\cite{IMLE} instead of GANs to incorporate multiple completions for an input partial shape without the downside of mode collapse.~\cite{HyperPocket} predicted the missing parts of the shapes rather than generating complete shapes by enforcing the representation of the missing point cloud space to follow a probability distribution and using a hypernetwork~\cite{Hypernet} to train a decoder that takes the concatenated representations of the partial and missing points and outputs weights of the target network. The target network is trained to produce a complete point cloud from a probability distribution as implemented in~\cite{PCHypernet}. ~\cite{EBResLT} proposed incorporating an energy-based model (EBM)~\cite{EBM} to transport the partial cloud representation to the complete cloud representation using residual (the difference between partial and complete representations) in an unsupervised setting. Among such methods, only~\cite{EBResLT} provided an uncertainty map for the multiple clouds generated for a partial input cloud by performing multiple inferences and naively computing the mean and variance for each point without any assumption about their correspondences, following the approach suggested in~\cite{UncertDeepL}. Following such an approach, we do not know any one-to-one mapping of individual points between the generated clouds. Also, such methods cannot restrict producing a complete cloud in a manner where each point corresponds to a particular position in the 3D shape. This might lead to completely unrelated points matched together, leading to erroneous mean and variance estimations.
 
-In the context of 3D modeling and computer aided design
-(\index{CAD}\emph{CAD}), polygon meshes are less popular due to their
-inability to accurately represent smoothly curved surfaces. Instead, spline
-representations that construct shapes from piecewise polynomial surfaces are
-used. Spline representations are desirable for a number of reasons:
-\begin{itemize}
-  \item \emph{Abstraction capacity}: Where polygon meshes might require
-    hundreds or thousands of faces to approximate a rounded feature, spline
-    surfaces can accurately represent such features often by a single patch
-    with a handful of control points, hence offering more intuitive editing
-    capabilities to a designer.
-  \item \emph{Built-in smoothness}: Spline surfaces retain their desired
-    smoothness properties when their control points are modified.
-  \item \emph{Compact storage}: Due to the sparse number of control points,
-    spline surfaces typically achieve a lower memory footprint than polygonal
-    representations.
-\end{itemize}
+To find a more meaningful matching between generated clouds, we posed this as a linear assignment problem with a suitable cost function (e.g., Euclidean distance). We fixed one generated complete cloud and found one-to-one mappings with points in the other complete clouds, and used the resulting matching to compute the mean and variance estimation of the predicted complete point cloud. This simple matching can be extended to any generative completion methods that can produce multiple possible predictions. \textit{\color{red}(Should I include the resulting differences here?)} \textbf{\color{orange} Explain how to do surface reconstruction from here to show uncertain surfaces! That should refer to the following works below, which do direct surface reconstructions!}
+ 
+Extensive work has been done in terms of reconstructing surfaces from point clouds, as discussed in~\cite{SurveyReconPC1, SurveyReconPC2}. While some methods reconstruct the surface as a mesh, others compute an implicit function whose zero level-set represents the surface. Poisson Surface Reconstruction (PSR)~\cite{PSR} has been the most popular method for surface reconstruction from an oriented point cloud. Multiple works have further improved upon PSR either by using screening~\cite{ScreenedPSR} and envelope constraints~\cite{PSREnv}, or by reformulating the classic Poisson solver in a differentiable way~\cite{DiffPSR}. Parallelly, numerous learning-based methods~\cite{IGR, SIREN, IDF} have been developed for surface reconstruction using implicit neural representation from oriented point clouds.
 
-Spline representations have been used for a variety of applications including
-industrial, automotive and aerospace design, architecture, entertainment, \etc.
+~\cite{nPSR} incorporated a neural network (NN) based on the Fourier neural operator to approximate PSR, combining the robustness of the traditional method and the generalizability of NNs. Similarly, standard approaches to producing a mesh from unoriented point clouds~\cite{iPSR, ParamGauss} have been accompanied by even more extensive learning-based methods yielding implicit representations of the surface~\cite{SAL, PredPrior, SparseSurf, POCO, P2Surf, DiGS, SALD, NeuralHessian}. However, none of the above methods have touched upon the aspect of the inherent uncertainty of such reconstruction methods for curved surfaces.
 
-\begin{figure}[htb]
-  \begin{center}
-  \input{figures/sample-fig}
-  \end{center}
-  \caption{A sample figure.}
-\end{figure}
+~\cite{GPIS} introduced a probabilistic formulation for modelling the implicit representation of the surface using a Gaussian Process (GP) with a covariance function equivalent to the thin plate spline energy regularizer. The covariance function of the GP can be adapted according to the regularizer used to incorporate the normal information. In such methods termed Gaussian Process Implicit Surfaces (GPIS), the implicit function is assumed to follow a Gaussian distribution with some prior assumption about the mean and covariance. One can compute the posterior distribution quite easily given the observed points, utilizing the properties of the Gaussian distribution. One can then reconstruct the surface by extracting the zero level set of the posterior mean along with the uncertainty of the reconstructed surface, quantified by the posterior covariance. Same idea has been adapted for several tasks with uncertainty, such as shape estimation for grasping~\cite{GPISGrasp}, view planning~\cite{GPISView}, and segmentation~\cite{GPRSeg}. 
 
-\rlipsum[4]
+Since GPs are better suited to quantify the uncertainty of a real-valued function (regression model), other approaches implemented the above idea with distance functions over a given space that map any query point to the distance to its closest point on the surface~\cite{logGPIS, geoPriorGPIS, GPDF, onlineGPIS, onlinePriorGPIS} instead of occupancy maps~\cite{GPOccMap}. Although distance field estimation using standard GPIS methods is accurate close to the surface, it does not hold true due to the lack of training points as we move away from the surface, with the field converging to zero even far from the surface~\cite{logGPIS}. Inspired by the heat method proposed in ~\cite{GeodesicHeat},~\cite{logGPIS} suggested using the logarithm of standard GP regression to model the implicit surface termed as log-GPIS. But apart from log-GPIS not producing a true Euclidean distance field, it sacrifices interpolation abilities on the surface for accurate distance field estimation away from the surface, and the logarithmic transformation affects the precision of uncertainty quantification~\cite{onlinePriorGPIS, GPDF}.~\cite{GPDF} proposed an alternative formulation of the distance field as a reverse of a latent scalar field modelled by GP where the reverting function corresponds to the inverse of the GP kernel.
+
+In terms of performance, most of these methods suffer due to the cubic complexity of GP, and limiting the number of points to decrease computational cost might affect robustness.~\cite{mixGPOccMap, locGPOccMap, onlineGPIS} tried to solve the computational complexity issue by using multiple GPs, each modelled locally on partitioned clusters.~\cite{onlinePriorGPIS} used a distance field prior extracted from simpler geometric features on the GP mean function to reduce the model complexity.~\cite{GMMGP} used a Gaussian Mixture Model (GMM) based prior instead of an extracted prior for the same purpose.
+
+~\cite{SPSR} combined PSR with GP to formulate a stochastic version of PSR where the observed points along with the normal information in a point cloud are considered as observations of a GP. Therefore, a local GP is used to approximate the distribution of the gradient vector field. The GP posterior, in turn, gives us the mean and covariance functions of the vector field. Then we can recover the mean and covariance functions of the scalar field from those of the vector field using a global PDE solver~\cite{SPSR}. While~\cite{SPSR} used a standard PDE solver,~\cite{NeuralSPSR} replaced it with a neural PDE solver by parametrizing the mean and covariance of the implicit scalar field using an NN and optimizing it using gradient descent on losses defined from the variational version of the Poisson equation. This formulation allowed one even to extend to the screened version defined in~\cite{ScreenedPSR} by incorporating the screening terms in the loss function, as well as removing the complex discretization process needed for the standard PDE solvers~\cite{NeuralSPSR}. 
+
+All these methods either depend on the availability of distance function values for supervision or are based on the assumption that we have access to oriented point clouds. But exact normal information is often not available for 3D data captured via scanning. Moreover, accurate distance values are quite difficult to acquire for proper supervision.~\cite{UncPCS} provided a likelihood map estimation for a point cloud with no other information (normal information, distance function values) available as a weighted sum of linear extrapolators computed from least squares fits of neighbouring points. Furthermore,~\cite{UncPCS} computed a confidence map that quantifies the confidence of local estimates by aggregating the confidences of individual extrapolators, similar to the likelihood map.
+
+\textbf{\color{orange}Here I will mention working with only partial data. Only~\cite{geoPriorGPIS} does this from what I have seen!}
+
+\textbf{\color{orange}We will focus on methods that extract the surface from the implicit function.}

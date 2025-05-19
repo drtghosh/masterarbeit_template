@@ -1,0 +1,125 @@
+\chapter{Methods}\label{ch:methods}
+This chapter introduces the different methods used to quantify uncertainty for curved surfaces from partial point clouds without any extra information available. We can formulate our task in two different scenarios regarding the availability of additional data or prior information related to the 3D shape. In case of prior knowledge or additional data being unavailable, we can only use the point cloud collected from multiple scans of the object. Then our task can be defined as:
+\begin{problemnotitle}\label{SingleCloud}
+    \probleminput{A point cloud with $N_C$ points represented by $\mathbf{X}=\left\{\mathbf{x}_{i} \in \mathbb{R}^{3}\right\}_{i=1}^{N_C}$.}
+    \problemoutput{A probabilistic estimate of the distance from the surface or probability of lying on the surface for any point $\mathbf{x} \in \mathbb{R}^{3}$.}
+\end{problemnotitle}
+
+On the other hand, if we assume that we know the kind of object the 3D shape belongs to, we can use an additional dataset of related 3D shapes with partial and complete point clouds. Then for a dataset of partial point clouds $\mathbf{X_P} \in \mathbb{R}^{N \times N_P \times 3}$ with $N$ instances of $N_P$ points in each incomplete point cloud instance, we have a corresponding dataset of complete point clouds $\mathbf{X_C} \in \mathbb{R}^{N \times N_C \times 3}$ with $N$ instances of $N_C$ points in each ground truth complete point cloud instance. Then the problem statement becomes:
+\begin{problemnotitle}\label{DataCloud}
+    \probleminput{A partial point cloud with $N_P$ points represented by $\mathbf{X}=\left\{\mathbf{x}_{i} \in \mathbb{R}^{3}\right\}_{i=1}^{N_P}$.}
+    \problemoutput{A probabilistic estimate of the distance from the surface or probability of lying on the surface for any point $\mathbf{x} \in \mathbb{R}^{3}$.}
+\end{problemnotitle}
+
+We can then use the learned distribution over the distance field or the probabilistic surface reconstruction for further downstream tasks.
+
+
+\section{Empirical Uncertainty Quantification for Point Cloud Completion}
+In this section, we propose to solve the Problem~\ref{DataCloud} utilizing a point cloud completion method for the given input partial cloud. Instead of directly computing the probabilistic estimate of the underlying surface, we first generate multiple possible completions from the input and then empirically estimate the surface along with the associated uncertainty by matching points between generated complete clouds. We denote the partial cloud by $\tilde{X}=\left\{\mathbf{\tilde{x}}_{i} \in \mathbb{R}^{3}\right\}_{i=1}^{N_P}$ and the generated complete cloud by $\hat{X}=\left\{\mathbf{\hat{x}}_{i} \in \mathbb{R}^{3}\right\}_{i=1}^{N_C}$. So we aim to learn $p(\hat{X}|\tilde{X})$. During training, we also have access to the ground truth complete cloud, which we denote by $X=\left\{\mathbf{x}_{i} \in \mathbb{R}^{3}\right\}_{i=1}^{N_C}$. Since for any partial cloud, there are many possible complete clouds consistent with the partial cloud, we need to learn to generate non-deterministic predictions depending upon some source of randomness. In Chapter~\ref{ch:background}, we reviewed different ways to quantify uncertainty in deep learning models, which gives us an idea about how we can also implement similar methods to generate different predictions with randomness. But first, we will describe the standard architecture used for point completion.
+
+
+    \subsection{General Structure of Point Completion Network}
+    \begin{figure}[htb]
+      \begin{center}
+      \includegraphics[width=\linewidth]{figures/general_network.png}
+      \end{center}
+      \caption{General structure of network used for training point cloud completion. During training, ground truth complete cloud $X$ is input to the encoder E to output the encoding $\mathbf{y}$. Parallelly partial cloud $\tilde{X}$ is input to the encoder E to generate the encoding $\mathbf{\tilde{y}}$, which is then given to generator G outputting new encoding $\mathbf{\hat{y}}$ which is compared to $\mathbf{y}$. The decoder D, on the other hand, produces a complete cloud $\hat{X}$ from  $\mathbf{\hat{y}}$.}\label{fig:gen_net}
+    \end{figure}
+    The general structure of our network used for point cloud completion consists of an auto-encoder (encoder-decoder network) and a generator network. We denote the encoder by E, decoder by D, and the generator by G (see Figure~\ref{fig:gen_net}). Via the auto-encoder network's encoder, we encode the partial shape represented by $\tilde{X}$ and the complete shape represented by $X$ to get the encodings $\mathbf{\tilde{y}}$ and $\mathbf{y}$ respectively. Meanwhile, generator G generates a new encoding $\mathbf{\hat{y}}$ from the partial shape encoding $\mathbf{\tilde{y}}$ from which the decoder can produce a new complete shape $\hat{X}$. Generator G plays the role of the network, which incorporates the randomness of the completion method, since through G, we can generate different encodings from the partial cloud encoding. We can then produce different complete clouds via the decoder and empirically estimate the uncertainty of our completion method from the generated clouds. In the following section, we will describe how we can implement the above idea.
+
+    
+    \subsection{Uncertainty in Encoding Generation}
+        \subsubsection{MC Dropout or DropConnect in Generator}
+        \begin{figure}[htb]
+          \begin{center}
+          \includegraphics[width=\linewidth]{figures/drop_network.png}
+          \end{center}
+      \caption{Network for point cloud completion uncertainty quantification using dropout or DropConnect. During inference, the original generator network is modified based on some masking ($\{m_i\}_{i=1}^M$) multiple times to produce different generators.}\label{fig:drop_net}
+        \end{figure}
+        One simple idea to generate different encodings via the generator is to use dropout or DropConnect in the generator network while training. As explained in section~\ref{MCDrop}, we can also use dropout or DropConnect during inference to generate different encodings and complete shapes corresponding to those encodings for a particular input partial cloud (see Figure~\ref{fig:drop_net}). 
+        
+        \subsubsection{Deep Ensemble of Generators}
+        \begin{figure}[htb]
+          \begin{center}
+          \includegraphics[width=\linewidth]{figures/ensemble_network.png}
+          \end{center}
+          \caption{Network for point cloud completion uncertainty quantification using deep ensemble. Different generators (based on the ensemble construction strategy) are trained. During inference, different generators produce different encodings.}\label{fig:ens_net}
+        \end{figure}
+        We can also use an ensemble of generators to train the point completion network. As described in section~\ref{Deepsemble}, there are many ways to construct the ensemble of generators. We will mostly focus on different initializations of parameters to create the ensemble. During inference, each generator in the ensemble outputs a different encoding, giving us different complete shapes(see Figure~\ref{fig:ens_net}).
+
+        \subsubsection{Conditional Implicit Generative Model}
+        \begin{figure}[htb]
+          \begin{center}
+          \includegraphics[width=\linewidth]{figures/implicit_gen_network.png}
+          \end{center}
+          \caption{Network for point cloud completion uncertainty quantification using conditional implicit generation. During inference, we sample noise from a standard Gaussian distribution multiple times and generate encodings based on the different noises.}\label{fig:implicit_net}
+        \end{figure}
+        Another possible method to generate non-deterministic predictions from an input is to add random noise to the input before passing it to the generator. We can reformulate Eq.~\ref{IGM} for conditional implicit generative models as:
+        \begin{equation}\label{IGM}
+            \mathbf{\tilde{z}} \sim q(\mathbf{z}), \quad \mathbf{\hat{y}} =  \mathcal{G}_\theta(\mathbf{\tilde{z}}; \mathbf{\tilde{y}})
+        \end{equation}
+        where $\mathcal{G}$ is specified by an NN with parameters $\theta$. With different $\mathbf{\tilde{z}}$ we can generate different $\mathbf{\hat{y}}$ corresponding to different complete shape for a fixed $\mathbf{\tilde{y}}$ (see Figure~\ref{fig:implicit_net}).
+
+    \subsection{Training Procedure}
+        \subsubsection{Learning encoding for point clouds}
+        \begin{figure}[htb]
+          \begin{center}
+          \includegraphics[width=\linewidth]{figures/emd_ae.png}
+          \end{center}
+          \caption{Training autoencoder by minimizing Earth mover's distance.}\label{fig:emd_ae}
+        \end{figure}
+        We learn to produce the encoding of a given point cloud by training an autoencoder, which encodes the given input to a lower-dimensional feature vector called a latent code or an encoding, and subsequently decodes the encoding to reconstruct the original input. The auto-encoder can be a standard auto-encoder (AE), a variational auto-encoder (VAE), or a vector-quantized variational auto-encoder (VQ-VAE), according to our deliberate choice. So, our auto-encoder is trained for a reconstruction task on a point cloud dataset for both partial and complete shapes.
+
+        For instances of ground truth point cloud $X=\left\{\mathbf{x}_{i} \in \mathbb{R}^{3}\right\}_{i=1}^{N_C}$ from the dataset of complete clouds $\mathbf{X_C} \in \mathbb{R}^{N \times N_C \times 3}$, we train an encoder-decoder network to learn an encoder mapping $\mathcal{E}: \mathbb{R}^{N_C \times 3} \rightarrow \mathbb{R}^{\ell}$ that takes the concatenation of coordinates of the $N_C$ points in complete cloud as input and produces an encoding in the latent space with dimension $\ell$ along with a decoder mapping $\mathcal{D}: \mathbb{R}^{\ell} \rightarrow \mathbb{R}^{N_C \times 3}$ that inverts the encoding back to a reconstructed point cloud with $N_C$ points as before. The autoencoder is trained using a reconstruction loss based on Earth Mover's Distance (EMD) computed as:
+        \begin{equation}\label{emd_loss}
+            L_{EMD} = \mathbb{E}_{X \sim p(X)} \left[d_{EMD}\left(X, \mathcal{D}(\mathcal{E}(X))\right)\right]
+        \end{equation}
+        where $p(X)$ denotes a distribution over the space of complete clouds from which we sample and $d_{EMD}\left(X, \mathcal{D}(\mathcal{E}(X))\right)$ denotes the Earth Mover's Distance between the input cloud and the reconstructed cloud (see Figure~\ref{fig:emd_ae}).
+
+        The encoding produced by the encoder provides a ready-made representation, which implicitly captures the shape manifold for a point cloud, to be used in downstream tasks. So, once training is done, we fix the network parameters while using the encoder and decoder in any subsequent network. As for the instances of point cloud $\tilde{X}=\left\{\mathbf{\tilde{x}}_{i} \in \mathbb{R}^{3}\right\}_{i=1}^{N_P}$ from the dataset of partial clouds $\mathbf{X_P} \in \mathbb{R}^{N \times N_P \times 3}$, we do not train a separate auto-encoder. Rather, we directly pass the partial cloud to the auto-encoder trained with complete clouds to produce encoding in the latent space, which is known to work better for downstream applications. To be able to do that, we can copy some points from the partial point cloud to match the number of points in the complete cloud before feeding it to the encoder. \textbf{\color{orange}We also experiment with an encoder architecture that is point set size invariant? Check this out later and update which one!}
+
+
+        \subsubsection{Learning to generate multiple point clouds}
+        \begin{figure}[htb]
+          \begin{center}
+          \includegraphics[width=\linewidth]{figures/implicit_gen_network_imle.png}
+          \end{center}
+          \caption{IMLE.}\label{fig:imle}
+        \end{figure}
+        Training differs according to the method selected for uncertainty quantification (more precisely, methods for inducing randomness) to produce different complete shapes. If we use dropout or DropConnect, the training procedure becomes quite straightforward. We follow the same general structure for point completion depicted in Figure~\ref{fig:gen_net} with the generator $G$ using dropout or DropConnect during training. If we use an ensemble of generators with $M$ models, then each generator needs to be trained individually, resulting in $M$ different training sequences similar to the procedure shown in Figure~\ref{fig:ens_net}. In this case, the inference and training follow the same pattern. 
+        
+        Finally, for the implicit generation, we learn to produce different complete shapes for a fixed partial input based on the noise injected into the generator. Since only one possible target shape is available for each partial shape, we need to train it differently from just computing the loss based on the one-to-one correspondence. Otherwise, any addition of noise will be rendered inconsequential, resulting in mode collapse and similar completion results. Note that this is not an issue for dropout or ensemble models. With dropping out, the uncertainty is inherently induced through the different selection of weights or nodes during training. For the ensemble, we train all the models separately. For training conditional implicit generative models, conditional Generative Adversarial Networks (GANs) had been the go-to approach for a long period. However, due to several drawbacks, such as mode collapse, the popularity of GANs has dwindled, with new approaches overturning the downsides of using GANs. One such method, called Implicit Maximum Likelihood Estimation (IMLE), was introduced by~\cite{IMLE}.~\cite{PCCIMLE} already applied the same idea for point cloud completion, which we adopt here.~\cite{PCCIMLE} showed that using conditional IMLE to train implicit generation results in more diverse completion results, resolving the mode collapse issue. Here, rather than comparing all the generated encodings ($\{\mathbf{\hat{y}}_i\}_{i=1}^M$) with the encoding of the complete shape $\mathbf{y}$, we only choose the one closest to $\mathbf{y}$ as shown in Figure~\ref{fig:imle}. This way, not every generated encoding is close to the encoding of the complete cloud, but every complete shape encoding has one generated encoding trained to be close in the latent space. This ensures that mode collapse does not happen, and every complete shape in the training data has at least one similar shape generated.
+
+        \begin{figure}[htb]
+          \begin{center}
+          \includegraphics[width=\linewidth]{figures/losses_main_network.png}
+          \end{center}
+          \caption{Losses for training the main network for point cloud completion with uncertainty.}\label{fig:losses_main}
+        \end{figure}
+        To train the network (generator), we need to specify the loss functions we want to minimize (see Figure~\ref{fig:losses_main}). As discussed above, we fix the parameters of the encoder-decoder network trained for reconstruction. For a ground truth point cloud $X=\left\{\mathbf{x}_{i} \in \mathbb{R}^{3}\right\}_{i=1}^{N_C}$ from the dataset of complete clouds $\mathbf{X_C} \in \mathbb{R}^{N \times N_C \times 3}$, we pass it to the encoder network to get its encoding $\mathbf{y}$. Similarly, we feed the corresponding point cloud $\tilde{X}=\left\{\mathbf{\tilde{x}}_{i} \in \mathbb{R}^{3}\right\}_{i=1}^{N_P}$ from the dataset of partial clouds $\mathbf{X_P} \in \mathbb{R}^{N \times N_P \times 3}$ to obtain its encoding $\mathbf{\tilde{y}}$. Now we pass $\mathbf{\tilde{y}}$ through the generator according to the selected architecture among the ones explained above. For dropout or DropConnect, we generate only one encoding $\mathbf{\hat{y}}$ and compare it with $\mathbf{y}$. Otherwise, we generate $M$ encodings $\{\mathbf{\hat{y}}_i\}_{i=1}^M$ corresponding to the $i$-th model in the ensemble or $i$-th noise sampled for implicit generation. In the ensemble method, we compare each of $\{\mathbf{\hat{y}}_i\}_{i=1}^M$ to $\mathbf{y}$. In implicit generation, we follow the proposed IMLE method and compare the encoding in $\{\mathbf{\hat{y}}_i\}_{i=1}^M$ closest to $\mathbf{y}$ with $\mathbf{y}$. We denote the corresponding loss function between two encodings as:
+        \begin{equation}\label{latent_loss}
+            L_{encoding}(\mathbf{y}, \mathbf{\hat{y}}) = \left\|\mathbf{y} - \mathbf{\hat{y}}\right\|^2,
+        \end{equation}
+        which is the Euclidean distance between the two encodings. We also need to ensure that the complete shapes generated are faithful to the partial shape. To maintain the fidelity of the completion results produced from the encodings output by the generator, we use the unidirectional Hausdorff distance between the partial cloud and the generated complete cloud. The corresponding loss is denoted as:
+        \begin{equation}\label{fidelity_loss}
+            L_{fidelity}(\tilde{X}, \hat{X}) = \max_{\mathbf{\tilde{x}}_{i} \in \tilde{X}} \min_{\mathbf{\hat{x}}_{j} \in \hat{X}} \left\|\mathbf{\tilde{x}}_{i}-\mathbf{\hat{x}}_{j}\right\|,
+        \end{equation}
+        where $\hat{X}=\left\{\mathbf{\hat{x}}_{j} \in \mathbb{R}^{3}\right\}_{j=1}^{N_C}$ is the set of generated point clouds.
+
+\section{Empirical Uncertainty Quantification for Implicit Neural Representation}
+
+
+
+    \subsection{Neural-Singular Hessian}
+
+
+
+\section{Functional Uncertainty Quantification for 3D Shapes}
+
+
+
+    \subsection{Gaussian Process with Contrastive Learning}
+
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%

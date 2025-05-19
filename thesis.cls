@@ -26,6 +26,8 @@
 \RequirePackage{dsfont}
 \RequirePackage{fancyhdr}
 \RequirePackage{graphicx}
+\RequirePackage{subcaption}
+\RequirePackage{geometry}
 \RequirePackage{xcolor}
 \RequirePackage{verbatim}
 \RequirePackage[citestyle=ieee-alphabetic,bibstyle=alphabetic,sorting=nyt,hyperref=auto,maxcitenames=3,maxbibnames=99,backref=true]{biblatex}
@@ -38,13 +40,14 @@
 \RequirePackage{thesis-hyphenation}
 \RequirePackage{appendix}
 \RequirePackage{times}
+\RequirePackage{tabularx}
+\RequirePackage{environ}
 
 \usetikzlibrary{calc,arrows.meta}
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % Some global settings
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-
 \makeindex
 
 \bibliography{references}
@@ -58,6 +61,33 @@
 \newtheorem{lem}[thm]{Lemma}
 \newtheorem{cor}{Corollary}[chapter]
 
+\newcommand{\problemtitle}[1]{\gdef\@problemtitle{#1}}% Store problem title
+\newcommand{\probleminput}[1]{\gdef\@probleminput{#1}}% Store problem input
+\newcommand{\problemquestion}[1]{\gdef\@problemquestion{#1}}% Store problem question
+\newcommand{\problemoutput}[1]{\gdef\@problemoutput{#1}}% Store problem output
+\NewEnviron{problem}{
+  \problemtitle{}\probleminput{}\problemquestion{}% Default input is empty
+  \BODY% Parse input
+  \par\addvspace{.5\baselineskip}
+  \noindent
+  \begin{tabularx}{\textwidth}{@{\hspace{\parindent}} l X c}
+    \multicolumn{2}{@{\hspace{\parindent}}l}{\@problemtitle} \\% Title
+    \textbf{Input:} & \@probleminput \\% Input
+    \textbf{Question:} & \@problemquestion% Question
+  \end{tabularx}
+  \par\addvspace{.5\baselineskip}
+}
+\NewEnviron{problemnotitle}{
+    \probleminput{}\problemoutput{}% Default input is empty
+    \BODY% Parse input
+    \par\addvspace{.5\baselineskip}
+     \begin{tabularx}{\textwidth}{@{\hspace{\parindent}} l X c}
+        \textbf{Input:} & \@probleminput \\% Input
+        \textbf{Output:} & \@problemoutput % Output
+      \end{tabularx}
+      \par\addvspace{.5\baselineskip}
+}
+
 \setlength{\headheight}{14.5pt}
 \lhead[\fancyplain{}{\thepage}]{\fancyplain{}{\nouppercase{\rightmark}}}
 \rhead[\fancyplain{}{\nouppercase{\leftmark}}]{\fancyplain{}{\thepage}}
@@ -68,6 +98,9 @@
 % no single lines separated from paragraphs
 \widowpenalty10000
 \clubpenalty10000
+
+% figure stuff
+\newsavebox{\largestimage}
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % Parameters for title page.
