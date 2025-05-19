@@ -106,7 +106,32 @@ In this section, we propose to solve the Problem~\ref{DataCloud} utilizing a poi
         \end{equation}
         where $\hat{X}=\left\{\mathbf{\hat{x}}_{j} \in \mathbb{R}^{3}\right\}_{j=1}^{N_C}$ is the set of generated point clouds.
 
+
+
 \section{Empirical Uncertainty Quantification for Implicit Neural Representation}
+In this section, we propose to solve the Problems~\ref{SingleCloud} and~\ref{DataCloud} by predicting uncertain implicit representations for the given input cloud. An implicit representation is a function $f: \mathbb{R}^{3} \mapsto \mathbb{R}$ such that the zero level set of $f$ precisely approximates the surface on the 3D shape denoted by $\mathcal{S}$ :
+\begin{equation}
+\mathcal{S} \approx \left\{\mathbf{x} \in \mathbb{R}^{3} \mid f(\mathbf{x})=0\right\}
+\end{equation} 
+Instead of directly computing the probabilistic estimate of the underlying surface, we first generate multiple possible implicit representations $\{f_i: \mathbb{R}^3 \mapsto \mathbb{R}\}_{i=1}^M$ from the input and then empirically estimate the surface along with the associated uncertainty from the different implicit representations. From previous works, we know that the neural implicit function $f$ usually approximates the (un-)signed distance function (UDF/SDF), which maps any point in space to the distance to its closest point on the surface. For a function $f$ to be a distance function corresponding to a given point cloud $X=\left\{\mathbf{x}_{i} \in \mathbb{R}^{3}\right\}_{i=1}^{N_C}$, it needs to satisfy some conditions or constraints as enumerated below~\cite{DiGS, NeuralHessian}:
+\begin{enumerate}
+    \item Dirichlet condition or manifold constraint: the observed points in the point cloud lie on the surface of the object, $f(\mathbf{x})=0$ for $\mathbf{x} \in X$.
+    \item Eikonal constraint: all points have a unit gradient, $\|\nabla f\|=1$.
+    \item Neumann condition or normal constraint:  the gradients of points match the ground truth normal field if normal information is available, $\nabla f=\mathcal{N}$, where $\mathcal{N}$ is the normal field.
+    \item Non-manifold constraint: non-manifold points (points not on the surface) have the same value as their ground truth SDF or UDF if the distance values are available.
+    \item Non-manifold penalisation constraint: non-manifold points have non-zero implicit function values.
+\end{enumerate}
+Out of the above constraints, while the manifold constraint and one of the Eikonal constraint or the Non-manifold constraint are necessary, the rest are mostly used as additional criteria to enhance the results~\cite{DiGS}. Since we are dealing with unoriented point clouds without normal information or SDF/UDF values for supervision, we cannot use normal and non-manifold constraints. We use the remaining 3 constraints for a given point cloud $X=\left\{\mathbf{x}_{i} \in \mathbb{R}^{3}\right\}_{i=1}^{N_C}$, which gives us the following loss functions:
+\begin{align*}
+& L_{\text {manifold }}=\int_{\mathcal{P}}\|f(x)\|_{1} d x  \tag{2}\\
+& L_{\text {non-manifold }}=\int_{Q_{\mathrm{far}}} \exp \left(-\alpha\|f(x)\|_{1}\right) d x, \alpha=100  \tag{3}\\
+& L_{\text {Eikonal }}=\int_{\mathcal{P} \cup Q_{\mathrm{far}}}\| \| \nabla f(x)\left\|_{2}-1\right\|_{1} d x  \tag{4}\\
+& L_{\text {Neumann }}=\int_{\mathcal{P}}(1-\langle\nabla f(x), \mathcal{N}(x)\rangle) d x \tag{5}
+\end{align*}
+\begin{align*}
+L_{\text {SIREN }}^{\text {unoriented }}= & \lambda_{\text {manifold }} L_{\text {manifold }}+\lambda_{\text {non-manifold }} L_{\text {non-manifold }}+  \tag{7}\\
+& \lambda_{\text {Eikonal }} L_{\text {Eikonal }} .
+\end{align*}
 
 
 
