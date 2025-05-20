@@ -77,10 +77,17 @@
   \end{tabularx}
   \par\addvspace{.5\baselineskip}
 }
-\NewEnviron{problemnotitle}{
+
+\newcounter{pcounter}
+\renewcommand{\thepcounter}{\arabic{pcounter}}
+\NewEnviron{problemnotitle}[2]{
+    \refstepcounter{pcounter}%
+    \label{#1}%
     \probleminput{}\problemoutput{}% Default input is empty
     \BODY% Parse input
     \par\addvspace{.5\baselineskip}
+    \noindent\textbf{Problem~\thepcounter}%
+    \par\addvspace{.3\baselineskip}
      \begin{tabularx}{\textwidth}{@{\hspace{\parindent}} l X c}
         \textbf{Input:} & \@probleminput \\% Input
         \textbf{Output:} & \@problemoutput % Output
@@ -101,6 +108,10 @@
 
 % figure stuff
 \newsavebox{\largestimage}
+
+% circle stuff
+\newcommand*\circled[1]{\tikz[baseline=(char.base)]{
+  \node[shape=circle,draw,inner sep=1pt] (char) {#1};}}
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % Parameters for title page.

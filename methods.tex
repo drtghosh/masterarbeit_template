@@ -1,12 +1,12 @@
 \chapter{Methods}\label{ch:methods}
 This chapter introduces the different methods used to quantify uncertainty for curved surfaces from partial point clouds without any extra information available. We can formulate our task in two different scenarios regarding the availability of additional data or prior information related to the 3D shape. In case of prior knowledge or additional data being unavailable, we can only use the point cloud collected from multiple scans of the object. Then our task can be defined as:
-\begin{problemnotitle}\label{SingleCloud}
+\begin{problemnotitle}{SingleCloud}{}
     \probleminput{A point cloud with $N_C$ points represented by $\mathbf{X}=\left\{\mathbf{x}_{i} \in \mathbb{R}^{3}\right\}_{i=1}^{N_C}$.}
     \problemoutput{A probabilistic estimate of the distance from the surface or probability of lying on the surface for any point $\mathbf{x} \in \mathbb{R}^{3}$.}
 \end{problemnotitle}
 
 On the other hand, if we assume that we know the kind of object the 3D shape belongs to, we can use an additional dataset of related 3D shapes with partial and complete point clouds. Then for a dataset of partial point clouds $\mathbf{X_P} \in \mathbb{R}^{N \times N_P \times 3}$ with $N$ instances of $N_P$ points in each incomplete point cloud instance, we have a corresponding dataset of complete point clouds $\mathbf{X_C} \in \mathbb{R}^{N \times N_C \times 3}$ with $N$ instances of $N_C$ points in each ground truth complete point cloud instance. Then the problem statement becomes:
-\begin{problemnotitle}\label{DataCloud}
+\begin{problemnotitle}{DataCloud}{}
     \probleminput{A partial point cloud with $N_P$ points represented by $\mathbf{X}=\left\{\mathbf{x}_{i} \in \mathbb{R}^{3}\right\}_{i=1}^{N_P}$.}
     \problemoutput{A probabilistic estimate of the distance from the surface or probability of lying on the surface for any point $\mathbf{x} \in \mathbb{R}^{3}$.}
 \end{problemnotitle}
@@ -122,21 +122,40 @@ Instead of directly computing the probabilistic estimate of the underlying surfa
     \item Non-manifold penalisation constraint: non-manifold points have non-zero implicit function values.
 \end{enumerate}
 Out of the above constraints, while the manifold constraint and one of the Eikonal constraint or the Non-manifold constraint are necessary, the rest are mostly used as additional criteria to enhance the results~\cite{DiGS}. Since we are dealing with unoriented point clouds without normal information or SDF/UDF values for supervision, we cannot use normal and non-manifold constraints. We use the remaining 3 constraints for a given point cloud $X=\left\{\mathbf{x}_{i} \in \mathbb{R}^{3}\right\}_{i=1}^{N_C}$, which gives us the following loss functions:
-\begin{align*}
-& L_{\text {manifold }}=\int_{\mathcal{P}}\|f(x)\|_{1} d x  \tag{2}\\
-& L_{\text {non-manifold }}=\int_{Q_{\mathrm{far}}} \exp \left(-\alpha\|f(x)\|_{1}\right) d x, \alpha=100  \tag{3}\\
-& L_{\text {Eikonal }}=\int_{\mathcal{P} \cup Q_{\mathrm{far}}}\| \| \nabla f(x)\left\|_{2}-1\right\|_{1} d x  \tag{4}\\
-& L_{\text {Neumann }}=\int_{\mathcal{P}}(1-\langle\nabla f(x), \mathcal{N}(x)\rangle) d x \tag{5}
-\end{align*}
-\begin{align*}
-L_{\text {SIREN }}^{\text {unoriented }}= & \lambda_{\text {manifold }} L_{\text {manifold }}+\lambda_{\text {non-manifold }} L_{\text {non-manifold }}+  \tag{7}\\
-& \lambda_{\text {Eikonal }} L_{\text {Eikonal }} .
-\end{align*}
+\begin{equation}\label{manifold_sdf}
+    \mathcal{L}_{\text {manifold }}=\int_{X}\|f(x)\|_{1} d x \approx \frac{1}{N_C}\sum_{i=1}^{N_C}\|f(\mathbf{x}_i)\|_1
+\end{equation}
+\begin{equation}\label{non_manifold_sdf}
+    \mathcal{L}_{\text {non-manifold }}=\int_{\underline{X}} \exp \left(-\alpha\|f(x)\|_{1}\right) d x \approx \frac{1}{N_C}\sum_{i=1}^{N_C} \exp \left(-\alpha\|f(\underline{\mathbf{x}_i})\|_1\right),
+\end{equation}
+where $\underline{X}=\left\{\underline{\mathbf{x}_i} \in \mathbb{R}^{3}\right\}_{i=1}^{N_C}$ is the set of points off the surface and $\alpha>>1$.
+\begin{equation}\label{Eikonal}
+     \begin{aligned}
+         \mathcal{L}_{\text {Eikonal }}=\int_{X \cup \underline{X}} \| \| \nabla f(x)\left\|_{2}-1\right\|_{1} d x \\
+         \approx \frac{1}{N_C}\sum_{i=1}^{N_C} \left(\| \| \nabla f(\mathbf{x}_i)\left\|_{2}-1\right\|_{1} + \| \| \nabla f(\underline{\mathbf{x}_i})\left\|_{2}-1\right\|_{1} \right).
+     \end{aligned}
+\end{equation}
+We can then compute the combined objective function as:
+\begin{equation}
+    \mathcal{L}= \lambda_{\text {manifold }} \mathcal{L}_{\text {manifold }}+\lambda_{\text {non-manifold }} \mathcal{L}_{\text {non-manifold }}+ \lambda_{\text {Eikonal }} \mathcal{L}_{\text {Eikonal }}
+\end{equation}
+where $\lambda_{\text {manifold }}, \lambda_{\text {non-manifold }}, \lambda_{\text {Eikonal }}$ are the corresponding regularization weights. But optimizing this objective is not enough to produce
+optimal results, as shown by~\cite{DiGS, NeuralHessian}. As discussed in section~\ref{INR-old}, several works have tried to solve this issue by introducing an additional loss depending upon the intended geometric effect. Since we are working with unoriented point clouds, we will employ the loss based on the Hessian matrix defined in~\cite{NeuralHessian}. The loss function associated with the Hessian matrix can be computed as:
+\begin{equation}\label{Hessian}
+    \mathcal{L}_{\text{Hessian }} = \int_{\circled{$X$}} \left|Det(\mathbf{H}_f(x))\right| d x \approx \frac{1}{N_C}\sum_{i=1}^{N_C} \left|Det\left(\mathbf{H}_f\left(\circled{$\mathbf{x}_i$}\right)\right)\right|,
+\end{equation}
+where $\circled{$X$}=\left\{\circled{$\mathbf{x}_i$} \in \mathbb{R}^{3}\right\}_{i=1}^{N_C}$ is the set of points close to the surface and $Det(\cdot)$ refers to the determinant of the matrix. So the overall objective function now becomes:
+\begin{equation}
+    \mathcal{L}= \lambda_{\text {manifold }} \mathcal{L}_{\text {manifold }}+\lambda_{\text {non-manifold }} \mathcal{L}_{\text {non-manifold }}+ \lambda_{\text {Eikonal }} \mathcal{L}_{\text {Eikonal }}+ \lambda_{\text{Hessian }} \tau \mathcal{L}_{\text{Hessian }},
+\end{equation}
+where $\tau$ is the annealing factor defined in~\cite{NeuralHessian}. Now with the objective defined, we can discuss introducing randomness in our implicit function prediction to calculate uncertainty.
 
 
-
-    \subsection{Neural-Singular Hessian}
-
+    \subsection{Predicting Implicit Representation with Randomness}
+    We can introduce randomness in the network architecture that approximates the implicit function utilizing any of the uncertainty quantification methods discussed in section~\ref{back_uqdl}. For Problem~\ref{SingleCloud}, the network structure is straightforward. We can use existing shape space learning architectures for point clouds, such as a standard or variational auto-encoder, with the decoder output being the implicit representation instead of a reconstructed cloud. On the other hand, for Problem~\ref{DataCloud}, during training, we have access to partial and complete cloud pairs but only the partial cloud for inference. So, we will have an information disparity between the training and inference processes if we directly learn the implicit representation from complete clouds in the shape space. To get a clearer picture regarding the information lost without the complete cloud, we first describe the sampling procedure used to learn the implicit function.
+    
+    To eliminate the issue of information availability, we learn to 
+    
 
 
 \section{Functional Uncertainty Quantification for 3D Shapes}
