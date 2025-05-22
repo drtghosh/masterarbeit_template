@@ -70,13 +70,17 @@ In this section, we propose to solve the Problem~\ref{DataCloud} utilizing a poi
         \end{figure}
         We learn to produce the encoding of a given point cloud by training an autoencoder, which encodes the given input to a lower-dimensional feature vector called a latent code or an encoding, and subsequently decodes the encoding to reconstruct the original input. The auto-encoder can be a standard auto-encoder (AE), a variational auto-encoder (VAE), or a vector-quantized variational auto-encoder (VQ-VAE), according to our deliberate choice. So, our auto-encoder is trained for a reconstruction task on a point cloud dataset for both partial and complete shapes.
 
-        For instances of ground truth point cloud $X=\left\{\mathbf{x}_{i} \in \mathbb{R}^{3}\right\}_{i=1}^{N_C}$ from the dataset of complete clouds $\mathbf{X_C} \in \mathbb{R}^{N \times N_C \times 3}$, we train an encoder-decoder network to learn an encoder mapping $\mathcal{E}: \mathbb{R}^{N_C \times 3} \rightarrow \mathbb{R}^{\ell}$ that takes the concatenation of coordinates of the $N_C$ points in complete cloud as input and produces an encoding in the latent space with dimension $\ell$ along with a decoder mapping $\mathcal{D}: \mathbb{R}^{\ell} \rightarrow \mathbb{R}^{N_C \times 3}$ that inverts the encoding back to a reconstructed point cloud with $N_C$ points as before. The autoencoder is trained using a reconstruction loss based on Earth Mover's Distance (EMD) computed as:
+        For instances of ground truth point cloud $X=\left\{\mathbf{x}_{i} \in \mathbb{R}^{3}\right\}_{i=1}^{N_C}$ from the dataset of complete clouds $\mathbf{X_C} \in \mathbb{R}^{N \times N_C \times 3}$, we train an encoder-decoder network to learn an encoder mapping $\mathcal{E}: \mathbb{R}^{N_C \times 3} \rightarrow \mathbb{R}^{\ell}$ that takes the concatenation of coordinates of the $N_C$ points in complete cloud as input and produces an encoding in the latent space with dimension $\ell$ along with a decoder mapping $\mathcal{D}: \mathbb{R}^{\ell} \rightarrow \mathbb{R}^{N_C \times 3}$ that inverts the encoding back to a reconstructed point cloud with $N_C$ points as before. The autoencoder is trained using a reconstruction loss based on Earth Mover's Distance (EMD). The reconstruction loss for a point cloud $X$ is denoted as:
         \begin{equation}\label{emd_loss}
-            L_{EMD} = \mathbb{E}_{X \sim p(X)} \left[d_{EMD}\left(X, \mathcal{D}(\mathcal{E}(X))\right)\right]
+            L_{EMD} = d_{EMD}\left(X, \mathcal{D}(\mathcal{E}(X))\right),
         \end{equation}
-        where $p(X)$ denotes a distribution over the space of complete clouds from which we sample and $d_{EMD}\left(X, \mathcal{D}(\mathcal{E}(X))\right)$ denotes the Earth Mover's Distance between the input cloud and the reconstructed cloud (see Figure~\ref{fig:emd_ae}).
+        where $d_{EMD}\left(X, \mathcal{D}(\mathcal{E}(X))\right)$ denotes the Earth Mover's Distance between the input cloud and the reconstructed cloud (see Figure~\ref{fig:emd_ae}). We can then compute the objective function for training the autoencoder as:
+        \begin{equation}\label{emd_obj}
+            \mathcal{L}_{EMD} = \mathbb{E}_{X \sim p(X)} \left[d_{EMD}\left(X, \mathcal{D}(\mathcal{E}(X))\right)\right]
+        \end{equation}
+        where $p(X)$ denotes a distribution over the space of complete clouds from which we sample.
 
-        The encoding produced by the encoder provides a ready-made representation, which implicitly captures the shape manifold for a point cloud, to be used in downstream tasks. So, once training is done, we fix the network parameters while using the encoder and decoder in any subsequent network. As for the instances of point cloud $\tilde{X}=\left\{\mathbf{\tilde{x}}_{i} \in \mathbb{R}^{3}\right\}_{i=1}^{N_P}$ from the dataset of partial clouds $\mathbf{X_P} \in \mathbb{R}^{N \times N_P \times 3}$, we do not train a separate auto-encoder. Rather, we directly pass the partial cloud to the auto-encoder trained with complete clouds to produce encoding in the latent space, which is known to work better for downstream applications. To be able to do that, we can copy some points from the partial point cloud to match the number of points in the complete cloud before feeding it to the encoder. \textbf{\color{orange}We also experiment with an encoder architecture that is point set size invariant? Check this out later and update which one!}
+        The encoding produced by the encoder provides a ready-made representation, which implicitly captures the shape manifold for a point cloud, to be used in downstream tasks. So, once training is done, we fix the network parameters while using the encoder and decoder in any subsequent network. As for the instances of point cloud $\tilde{X}=\left\{\mathbf{\tilde{x}}_{i} \in \mathbb{R}^{3}\right\}_{i=1}^{N_P}$ from the dataset of partial clouds $\mathbf{X_P} \in \mathbb{R}^{N \times N_P \times 3}$, we do not train a separate auto-encoder. Rather, we directly pass the partial cloud to the auto-encoder trained with complete clouds to produce encoding in the latent space, which is known to work better for downstream applications. To do that, we can copy some points from the partial point cloud to match the number of points in the complete cloud before feeding it to the encoder. \textbf{\color{orange}We also experiment with an encoder architecture that is point set size invariant? Check this out later and update which one!}
 
 
         \subsubsection{Learning to generate multiple point clouds}
@@ -98,13 +102,30 @@ In this section, we propose to solve the Problem~\ref{DataCloud} utilizing a poi
         \end{figure}
         To train the network (generator), we need to specify the loss functions we want to minimize (see Figure~\ref{fig:losses_main}). As discussed above, we fix the parameters of the encoder-decoder network trained for reconstruction. For a ground truth point cloud $X=\left\{\mathbf{x}_{i} \in \mathbb{R}^{3}\right\}_{i=1}^{N_C}$ from the dataset of complete clouds $\mathbf{X_C} \in \mathbb{R}^{N \times N_C \times 3}$, we pass it to the encoder network to get its encoding $\mathbf{y}$. Similarly, we feed the corresponding point cloud $\tilde{X}=\left\{\mathbf{\tilde{x}}_{i} \in \mathbb{R}^{3}\right\}_{i=1}^{N_P}$ from the dataset of partial clouds $\mathbf{X_P} \in \mathbb{R}^{N \times N_P \times 3}$ to obtain its encoding $\mathbf{\tilde{y}}$. Now we pass $\mathbf{\tilde{y}}$ through the generator according to the selected architecture among the ones explained above. For dropout or DropConnect, we generate only one encoding $\mathbf{\hat{y}}$ and compare it with $\mathbf{y}$. Otherwise, we generate $M$ encodings $\{\mathbf{\hat{y}}_i\}_{i=1}^M$ corresponding to the $i$-th model in the ensemble or $i$-th noise sampled for implicit generation. In the ensemble method, we compare each of $\{\mathbf{\hat{y}}_i\}_{i=1}^M$ to $\mathbf{y}$. In implicit generation, we follow the proposed IMLE method and compare the encoding in $\{\mathbf{\hat{y}}_i\}_{i=1}^M$ closest to $\mathbf{y}$ with $\mathbf{y}$. We denote the corresponding loss function between two encodings as:
         \begin{equation}\label{latent_loss}
-            L_{encoding}(\mathbf{y}, \mathbf{\hat{y}}) = \left\|\mathbf{y} - \mathbf{\hat{y}}\right\|^2,
+            L_{encoding}(\mathbf{y}, \mathbf{\hat{y}}) = \left\|\mathbf{y} - \mathbf{\hat{y}}\right\|_2^2,
         \end{equation}
         which is the Euclidean distance between the two encodings. We also need to ensure that the complete shapes generated are faithful to the partial shape. To maintain the fidelity of the completion results produced from the encodings output by the generator, we use the unidirectional Hausdorff distance between the partial cloud and the generated complete cloud. The corresponding loss is denoted as:
         \begin{equation}\label{fidelity_loss}
-            L_{fidelity}(\tilde{X}, \hat{X}) = \max_{\mathbf{\tilde{x}}_{i} \in \tilde{X}} \min_{\mathbf{\hat{x}}_{j} \in \hat{X}} \left\|\mathbf{\tilde{x}}_{i}-\mathbf{\hat{x}}_{j}\right\|,
+            L_{fidelity}(\tilde{X}, \hat{X}) = \max_{\mathbf{\tilde{x}}_{i} \in \tilde{X}} \min_{\mathbf{\hat{x}}_{j} \in \hat{X}} \left\|\mathbf{\tilde{x}}_{i}-\mathbf{\hat{x}}_{j}\right\|_2,
         \end{equation}
-        where $\hat{X}=\left\{\mathbf{\hat{x}}_{j} \in \mathbb{R}^{3}\right\}_{j=1}^{N_C}$ is the set of generated point clouds.
+        where $\hat{X}=\left\{\mathbf{\hat{x}}_{j} \in \mathbb{R}^{3}\right\}_{j=1}^{N_C}$ is the set of generated point clouds. So the overall objective for training the network is:
+        \begin{equation}\label{gen_obj}
+            \begin{aligned}
+                \mathcal{L}_{igm} = \mathbb{E}_{X, \tilde{X} \sim p(X, \tilde{X})} \left[\lambda_{encoding} L_{encoding}\left(\mathcal{E}(X), \mathcal{G}_\theta(\mathcal{E}(\tilde{X}))\right)\right \\
+                + \left\lambda_{fidelity} L_{fidelity}(\tilde{X}, \mathcal{D}\left(\mathcal{G}_\theta(\mathcal{E}(\tilde{X})))\right)\right]
+            \end{aligned},
+        \end{equation}
+        where $\mathcal{E}$ is the encoder mapping, $\mathcal{D}$ is the decoder mapping, and $\mathcal{G}_\theta$ is the generator mapping by the NN parametrized by $\theta$. For IMLE, the above objective changes to:
+        \begin{equation}\label{gen_obj}
+            \begin{aligned}
+                \mathcal{L}_{igm}^{imle} = \mathbb{E}_{X, \tilde{X} \sim p(X, \tilde{X}), \mathbf{Z}} \left[\lambda_{encoding} \min_{i=1, \ldots, M} L_{encoding}\left(\mathcal{E}(X), \mathcal{G}_\theta(\mathcal{E}(\tilde{X}), \mathbf{\tilde{z}}_i)\right)\right \\
+                + \left\lambda_{fidelity} L_{fidelity}(\tilde{X}, \mathcal{D}\left(\mathcal{G}_\theta(\mathcal{E}(\tilde{X})))\right)\right]
+            \end{aligned},
+        \end{equation}
+        where $\mathbf{Z} = (\mathbf{\tilde{z}}_1, \ldots, \mathbf{\tilde{z}}_M)^T$ such that $\mathbf{\tilde{z}}_i \sim \mathcal{N}(0, I_z) \forall i=\{1, \ldots, M\}$ with noise dimension $z$ and hyperparameter M.
+
+
+    \subsection{Uncertainty Map Computation with Matching}
 
 
 
@@ -121,6 +142,7 @@ Instead of directly computing the probabilistic estimate of the underlying surfa
     \item Non-manifold constraint: non-manifold points (points not on the surface) have the same value as their ground truth SDF or UDF if the distance values are available.
     \item Non-manifold penalisation constraint: non-manifold points have non-zero implicit function values.
 \end{enumerate}
+
 Out of the above constraints, while the manifold constraint and one of the Eikonal constraint or the Non-manifold constraint are necessary, the rest are mostly used as additional criteria to enhance the results~\cite{DiGS}. Since we are dealing with unoriented point clouds without normal information or SDF/UDF values for supervision, we cannot use normal and non-manifold constraints. We use the remaining 3 constraints for a given point cloud $X=\left\{\mathbf{x}_{i} \in \mathbb{R}^{3}\right\}_{i=1}^{N_C}$, which gives us the following loss functions:
 \begin{equation}\label{manifold_sdf}
     \mathcal{L}_{\text {manifold }}=\int_{X}\|f(x)\|_{1} d x \approx \frac{1}{N_C}\sum_{i=1}^{N_C}\|f(\mathbf{x}_i)\|_1
@@ -136,8 +158,8 @@ where $\underline{X}=\left\{\underline{\mathbf{x}_i} \in \mathbb{R}^{3}\right\}_
      \end{aligned}
 \end{equation}
 We can then compute the combined objective function as:
-\begin{equation}
-    \mathcal{L}= \lambda_{\text {manifold }} \mathcal{L}_{\text {manifold }}+\lambda_{\text {non-manifold }} \mathcal{L}_{\text {non-manifold }}+ \lambda_{\text {Eikonal }} \mathcal{L}_{\text {Eikonal }}
+\begin{equation}\label{inr_loss1}
+    \mathcal{L}_{inr}= \lambda_{\text {manifold }} \mathcal{L}_{\text {manifold }}+\lambda_{\text {non-manifold }} \mathcal{L}_{\text {non-manifold }}+ \lambda_{\text {Eikonal }} \mathcal{L}_{\text {Eikonal }}
 \end{equation}
 where $\lambda_{\text {manifold }}, \lambda_{\text {non-manifold }}, \lambda_{\text {Eikonal }}$ are the corresponding regularization weights. But optimizing this objective is not enough to produce
 optimal results, as shown by~\cite{DiGS, NeuralHessian}. As discussed in section~\ref{INR-old}, several works have tried to solve this issue by introducing an additional loss depending upon the intended geometric effect. Since we are working with unoriented point clouds, we will employ the loss based on the Hessian matrix defined in~\cite{NeuralHessian}. The loss function associated with the Hessian matrix can be computed as:
@@ -146,23 +168,40 @@ optimal results, as shown by~\cite{DiGS, NeuralHessian}. As discussed in section
 \end{equation}
 where $\circled{$X$}=\left\{\circled{$\mathbf{x}_i$} \in \mathbb{R}^{3}\right\}_{i=1}^{N_C}$ is the set of points close to the surface and $Det(\cdot)$ refers to the determinant of the matrix. So the overall objective function now becomes:
 \begin{equation}
-    \mathcal{L}= \lambda_{\text {manifold }} \mathcal{L}_{\text {manifold }}+\lambda_{\text {non-manifold }} \mathcal{L}_{\text {non-manifold }}+ \lambda_{\text {Eikonal }} \mathcal{L}_{\text {Eikonal }}+ \lambda_{\text{Hessian }} \tau \mathcal{L}_{\text{Hessian }},
+    \mathcal{L}_{inr}= \lambda_{\text {manifold }} \mathcal{L}_{\text {manifold }}+\lambda_{\text {non-manifold }} \mathcal{L}_{\text {non-manifold }}+ \lambda_{\text {Eikonal }} \mathcal{L}_{\text {Eikonal }}+ \lambda_{\text{Hessian }} \tau \mathcal{L}_{\text{Hessian }},
 \end{equation}
 where $\tau$ is the annealing factor defined in~\cite{NeuralHessian}. Now with the objective defined, we can discuss introducing randomness in our implicit function prediction to calculate uncertainty.
 
 
     \subsection{Predicting Implicit Representation with Randomness}
+    \begin{figure}[htb]
+      \begin{center}
+      \includegraphics[width=\linewidth]{figures/inr_network.png}
+      \end{center}
+      \caption{General structure of network used for training implicit function with randomness. During training, the partial cloud $\tilde{X}$ is input to the encoder E to output the encoding $\mathbf{\tilde{y}}$. Manifold, non-manifold, and near points conditioned on $\mathbf{\tilde{y}}$ and noises are fed to the decoder D$_{\text{INR}}$ to predict the implicit function corresponding to the noise.}\label{fig:inr_net}
+    \end{figure}
     We can introduce randomness in the network architecture that approximates the implicit function utilizing any of the uncertainty quantification methods discussed in section~\ref{back_uqdl}. For Problem~\ref{SingleCloud}, the network structure is straightforward. We can use existing shape space learning architectures for point clouds, such as a standard or variational auto-encoder, with the decoder output being the implicit representation instead of a reconstructed cloud. On the other hand, for Problem~\ref{DataCloud}, during training, we have access to partial and complete cloud pairs but only the partial cloud for inference. So, we will have an information disparity between the training and inference processes if we directly learn the implicit representation from complete clouds in the shape space. To get a clearer picture regarding the information lost without the complete cloud, we first describe the sampling procedure used to learn the implicit function.
     
-    To eliminate the issue of information availability, we learn to 
+    To sample points not on the surface (points in the set $\underline{X}$), we find a bounding box around the point cloud and uniformly sample points within that box. Considering most points inside the box are off the surface, sampling a point on the surface is highly unlikely. To sample points close to the surface (points in the set \circled{$X$}), we emulate the sampling used in~\cite{IGR, SALD, NeuralHessian}. For each point $\mathbf{x}_i$ on the surface, we find the distance to the $k$-th nearest point ($k=50$ used by previous methods) as $d$. Then we sample one point from the Gaussian distribution $\mathcal{N}(\mathbf{x}_i, d^2I)$ to find a point close to the surface. We observe that while sampling of non-manifold points is not affected by the unavailability of a complete cloud, sampling of points close to the surface differs. So, we avoid using points close to the surface during inference. Also, since at test time, only the partial point cloud is available, we can't use encoding of the complete cloud while learning. With all that in mind, we propose the architecture depicted in Figure~\ref{fig:inr_net}.
+
+    We consider the complete point cloud $X$ as the points lying on the surface (manifold points). We sample the non-manifold and near point sets $\underline{X}$ and \circled{$X$} as explained. We feed the partial cloud $\tilde{X}$ to the encoder E to get the encoding $\mathbf{\tilde{y}}$. Parallelly, we sample multiple noises $\mathbf{Z} = (\mathbf{\tilde{z}}_1, \ldots, \mathbf{\tilde{z}}_M)^T$ such that $\mathbf{\tilde{z}}_i \sim \mathcal{N}(0, I_z) \forall i=\{1, \ldots, M\}$ with noise dimension $z$ and hyperparameter M. We then pass the manifold, non-manifold, and near points conditioned on the encoding $\mathbf{\tilde{y}}$ and noises to the decoder D$_{\text{INR}}$ to predict the implicit function corresponding to each noise. If we train to minimize the objective for the implicit function predicted for each noise, we might run into the issue of mode collapse. This will lead to a lack of diversity in predicted implicit functions. Therefore, during training, we only choose the noise leading to the implicit function with minimum manifold loss ($\mathcal{L}_{\text {manifold }}$) for computing the rest of the objective function and performing backpropagation. During inference, we predict different implicit functions based on different noises and empirically estimate the mean and variance at any point based on those predicted functions to obtain our reconstructed surface with associated uncertainty.
+
+    We also need to regularize our learned encoding for better shape space learning using autoencoder architectures. For a standard autoencoder, the regularization loss can be computed as:
+    \begin{equation}\label{reg_latent}
+        \mathcal{L}_{\text {reg }} = \left\|\mathcal{E}(\tilde{X})\right\|_2^2,
+    \end{equation}
+    where $\mathcal{E}$ is the encoder mapping. For a variational autoencoder, the  regularization loss can be computed as (similar to~\cite{SAL}):
+    \begin{equation}\label{reg_latent}
+        \mathcal{L}_{\text {reg }} = \left\|\mu\left(\mathcal{E}(\tilde{X})\right)\right\|_1 +\left\|diag(\Sigma\left(\mathcal{E}(\tilde{X})\right)\right\|_1,
+    \end{equation}
+    where $diag$ is the diagonal matrix, $\mu$ denotes the latent prediction (mean function) and $\Sigma$ refers to the covariance matrix for latent prediction. Such regularization enforces the latent means to be near zero and the covariances to be close to identity matrices. 
+
     
 
-
 \section{Functional Uncertainty Quantification for 3D Shapes}
+In this section, we try to tackle the Problems~\ref{SingleCloud} and~\ref{DataCloud} by describing an uncertain implicit representation for the given input cloud by a Gaussian process. There are several existing works (see section~\ref{Stoch-old}) that followed the same approach for a single point cloud (Problem~\ref{SingleCloud}). So, we will only focus on methods to solve Problem~\ref{DataCloud}.
 
 
-
-    \subsection{Gaussian Process with Contrastive Learning}
 
 
 
