@@ -16,7 +16,11 @@
 \begin{center}
     \textbf{Abstract}\\
 \end{center}
-Here goes the abstract.
+Point clouds of a 3D object obtained via scanning are often noisy and incomplete. It is essential to then reconstruct the underlying surface and quantify the uncertainty from the sparse data available, enabling the execution of many downstream tasks.
+
+Existing methods have provided uncertainty quantification for reconstructed surfaces from complete scans by utilizing normal information. However, normals and complete scans are often not available in real-life applications, and only a sparse point cloud is observed. This thesis focuses on quantifying the uncertainty of surface reconstruction from a partial point cloud, either in the form of a completed point cloud or an implicit representation.
+
+We employed different uncertainty quantification methods for deep learning in our thesis. We generated different possible completed clouds to empirically compute the average and variance of the distribution of generated clouds. For the implicit representation, we implemented the same empirical approach. Furthermore, we attempted to model the implicit function values as observations of a Gaussian process to learn a distribution over the possible implicit functions, thereby directly quantifying uncertainty without any empirical estimation.
 
 \mainmatter
 \input{introduction}

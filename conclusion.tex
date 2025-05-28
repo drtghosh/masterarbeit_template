@@ -1,1 +1,14 @@
 \chapter{Conclusion}\label{ch:conclusion}
+\section{Summary}
+This work researched and implemented several possible methods for quantifying uncertainty for surface reconstruction from unoriented partial point clouds. To the best of our knowledge, this type of problem has not been addressed in any previous works. 
+
+The existing point cloud completion methods can be modified to generate multiple possible complete clouds, which then can be used to empirically estimate the distribution over the reconstructed surface. Various possible methods of learning to generate multiple clouds from the input partial cloud were implemented. While dropout or DropConnect-based methods were simpler to implement and faster to train, the generated clouds often lack diversity or consistency. The ensemble of generators is also sometimes not diverse enough, depending on the way the ensemble is constructed. However, the results were more consistent than those of DropConnect or dropout-based generations. Unfortunately, the ensemble method is not scalable as the number of parameters increases linearly with the number of models, resulting in high memory and time complexity. Implicit generative models yielded the most promising results, generating diverse and consistent completions with minimal added complexity in network structures.
+\textit{\color{orange} Add some anecdotes on the quantitative results once I have them!}
+
+The same idea can also be applied to implicit representation learning from unoriented point clouds. Although such methods are typically designed for individual point clouds, they can be modified to learn shape spaces conditioned on observed partial clouds. Considering the results of the point cloud completion method, only the implicit generative method was implemented in this setting. \textit{\color{orange} Add some anecdotes on the results once I have them!} 
+
+Finally, motivated by the numerous works that attempt to quantify the uncertainty of surface reconstruction using a Gaussian process, a conditional Gaussian process was employed to model the implicit function of the surface based on partial cloud input. Gaussian processes are primarily applied to regression tasks. Therefore, in most previous methods, the implicit representations are learned via some real-valued supervision. However, only observed points lying on the surface (manifold points) are available in our setting, and directly applying a GP is not suitable in this case. We first attempted to learn a mapping or embedding for both manifold and non-manifold points using various criteria, such as posterior likelihood or contrastive loss, before applying a GP to model the implicit function. Unfortunately, although the learned embeddings were shown to be meaningful, the Gaussian posterior resulted in many spurious geometries due to a lack of supervision from non-manifold points.
+
+
+
+\section{Future Work}

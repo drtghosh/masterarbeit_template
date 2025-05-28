@@ -225,6 +225,17 @@ abstract = {Abstract Assuming that numerical scores are available for the perfor
 year = {1955}
 }
 
+@ARTICLE{RectAssign,
+  author={Crouse, David F.},
+  journal={IEEE Transactions on Aerospace and Electronic Systems}, 
+  title={On implementing 2D rectangular assignment algorithms}, 
+  year={2016},
+  volume={52},
+  number={4},
+  pages={1679-1696},
+  keywords={Two dimensional displays;Approximation algorithms;Complexity theory;Minimization;MATLAB;Cost function},
+  doi={10.1109/TAES.2016.140952}}
+
 @inproceedings{PSR,
 author = {Kazhdan, Michael and Bolitho, Matthew and Hoppe, Hugues},
 title = {Poisson surface reconstruction},
@@ -1427,6 +1438,172 @@ year = {2015}
     month     = {October},
     year      = {2023},
     pages     = {11975-11986}
+}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% More Related %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+@ARTICLE{PCNSurvey,
+  author={Tesema, Keneni W. and Hill, Lyndon and Jones, Mark W. and Ahmad, Muneeb I. and Tam, Gary K.L.},
+  journal={IEEE Transactions on Visualization and Computer Graphics}, 
+  title={Point Cloud Completion: A Survey}, 
+  year={2024},
+  volume={30},
+  number={10},
+  pages={6880-6899},
+  keywords={Point cloud compression;Shape;Surveys;Three-dimensional displays;Semantics;Task analysis;Surface reconstruction;Point cloud completion;deep learning;computer vision},
+  doi={10.1109/TVCG.2023.3344935}
+}
+
+@article{GANPCC1,
+  author       = {Swaminathan Gurumurthy and
+                  Shubham Agrawal},
+  title        = {High Fidelity Semantic Shape Completion for Point Clouds using Latent
+                  Optimization},
+  journal      = {CoRR},
+  volume       = {abs/1807.03407},
+  year         = {2018},
+  url          = {http://arxiv.org/abs/1807.03407},
+  eprinttype    = {arXiv},
+  eprint       = {1807.03407},
+  timestamp    = {Mon, 13 Aug 2018 16:46:00 +0200},
+  biburl       = {https://dblp.org/rec/journals/corr/abs-1807-03407.bib},
+  bibsource    = {dblp computer science bibliography, https://dblp.org}
+}
+
+@article{GANUPCC,
+  author       = {Xuelin Chen and
+                  Baoquan Chen and
+                  Niloy J. Mitra},
+  title        = {Unpaired Point Cloud Completion on Real Scans using Adversarial Training},
+  journal      = {CoRR},
+  volume       = {abs/1904.00069},
+  year         = {2019},
+  url          = {http://arxiv.org/abs/1904.00069},
+  eprinttype    = {arXiv},
+  eprint       = {1904.00069},
+  timestamp    = {Wed, 24 Apr 2019 12:21:25 +0200},
+  biburl       = {https://dblp.org/rec/journals/corr/abs-1904-00069.bib},
+  bibsource    = {dblp computer science bibliography, https://dblp.org}
+}
+
+@inproceedings{GAN,
+author = {Goodfellow, Ian J. and Pouget-Abadie, Jean and Mirza, Mehdi and Xu, Bing and Warde-Farley, David and Ozair, Sherjil and Courville, Aaron and Bengio, Yoshua},
+title = {Generative adversarial nets},
+year = {2014},
+publisher = {MIT Press},
+address = {Cambridge, MA, USA},
+abstract = {We propose a new framework for estimating generative models via an adversarial process, in which we simultaneously train two models: a generative model G that captures the data distribution, and a discriminative model D that estimates the probability that a sample came from the training data rather than G. The training procedure for G is to maximize the probability of D making a mistake. This framework corresponds to a minimax two-player game. In the space of arbitrary functions G and D, a unique solution exists, with G recovering the training data distribution and D equal to ½ everywhere. In the case where G and D are defined by multilayer perceptrons, the entire system can be trained with backpropagation. There is no need for any Markov chains or unrolled approximate inference networks during either training or generation of samples. Experiments demonstrate the potential of the framework through qualitative and quantitative evaluation of the generated samples.},
+booktitle = {Proceedings of the 28th International Conference on Neural Information Processing Systems - Volume 2},
+pages = {2672–2680},
+numpages = {9},
+location = {Montreal, Canada},
+series = {NIPS'14}
+}
+
+@inproceedings{NeuralPull,
+    title = {Neural-Pull: Learning Signed Distance Functions from Point Clouds by Learning to Pull Space onto Surfaces},
+    author = {Baorui, Ma and Zhizhong, Han and Yu-Shen, Liu and Matthias, Zwicker},
+    booktitle = {International Conference on Machine Learning (ICML)},
+    year = {2021}
+}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% Eval %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+@techreport{ShapeNet,
+  title       = {{ShapeNet: An Information-Rich 3D Model Repository}},
+  author      = {Chang, Angel X. and Funkhouser, Thomas and Guibas, Leonidas and Hanrahan, Pat and Huang, Qixing and Li, Zimo and Savarese, Silvio and Savva, Manolis and Song, Shuran and Su, Hao and Xiao, Jianxiong and Yi, Li and Yu, Fisher},
+  number      = {arXiv:1512.03012 [cs.GR]},
+  institution = {Stanford University --- Princeton University --- Toyota Technological Institute at Chicago},
+  year        = {2015}
+}
+
+@Article{BuildingPCC,
+AUTHOR = {Gao, W. and Peters, R. and Stoter, J.},
+TITLE = {Building-PCC: Building Point Cloud Completion Benchmarks},
+JOURNAL = {ISPRS Annals of the Photogrammetry, Remote Sensing and Spatial Information Sciences},
+VOLUME = {X-4/W5-2024},
+YEAR = {2024},
+PAGES = {179--186},
+URL = {https://isprs-annals.copernicus.org/articles/X-4-W5-2024/179/2024/},
+DOI = {10.5194/isprs-annals-X-4-W5-2024-179-2024}
+}
+
+@inproceedings{FiLM,
+    title={SA-ConvONet: Sign-Agnostic Optimization of Convolutional Occupancy Networks},
+    author={Tang, Jiapeng and Lei, Jiabao and Xu, Dan and Ma, Feiying and Jia, Kui and Zhang, Lei},
+    booktitle={Proceedings of the IEEE/CVF International Conference on Computer Vision},
+    year={2021}
+}
+
+@INPROCEEDINGS{PointNet,
+  author={Charles, R. Qi and Su, Hao and Kaichun, Mo and Guibas, Leonidas J.},
+  booktitle={2017 IEEE Conference on Computer Vision and Pattern Recognition (CVPR)}, 
+  title={PointNet: Deep Learning on Point Sets for 3D Classification and Segmentation}, 
+  year={2017},
+  volume={},
+  number={},
+  pages={77-85},
+  keywords={Three-dimensional displays;Shape;Computer architecture;Feature extraction;Machine learning;Semantics},
+  doi={10.1109/CVPR.2017.16}
+}
+
+@article{Adam,
+  title={Adam: A Method for Stochastic Optimization},
+  author={Diederik P. Kingma and Jimmy Ba},
+  journal={CoRR},
+  year={2014},
+  volume={abs/1412.6980},
+  url={https://api.semanticscholar.org/CorpusID:6628106}
+}
+
+@article{ExpLR,
+  author       = {Zhiyuan Li and
+                  Sanjeev Arora},
+  title        = {An Exponential Learning Rate Schedule for Deep Learning},
+  journal      = {CoRR},
+  volume       = {abs/1910.07454},
+  year         = {2019},
+  url          = {http://arxiv.org/abs/1910.07454},
+  eprinttype    = {arXiv},
+  eprint       = {1910.07454},
+  timestamp    = {Mon, 25 Nov 2019 14:34:48 +0100},
+  biburl       = {https://dblp.org/rec/journals/corr/abs-1910-07454.bib},
+  bibsource    = {dblp computer science bibliography, https://dblp.org}
+}
+
+@inproceedings{DCIkNN,
+  title={Fast k-nearest neighbour search via {Dynamic Continuous Indexing}},
+  author={Li, Ke and Malik, Jitendra},
+  booktitle={International Conference on Machine Learning},
+  pages={671--679},
+  year={2016}
+}
+
+@inproceedings{AMSGrad,
+  author       = {Sashank J. Reddi and
+                  Satyen Kale and
+                  Sanjiv Kumar},
+  title        = {On the Convergence of Adam and Beyond},
+  booktitle    = {6th International Conference on Learning Representations, {ICLR} 2018,
+                  Vancouver, BC, Canada, April 30 - May 3, 2018, Conference Track Proceedings},
+  publisher    = {OpenReview.net},
+  year         = {2018},
+  url          = {https://openreview.net/forum?id=ryQu7f-RZ},
+  timestamp    = {Thu, 04 Apr 2019 13:20:09 +0200},
+  biburl       = {https://dblp.org/rec/conf/iclr/ReddiKK18.bib},
+  bibsource    = {dblp computer science bibliography, https://dblp.org}
+}
+
+@inproceedings{CosLR,
+  author       = {Ilya Loshchilov and
+                  Frank Hutter},
+  title        = {{SGDR:} Stochastic Gradient Descent with Warm Restarts},
+  booktitle    = {5th International Conference on Learning Representations, {ICLR} 2017,
+                  Toulon, France, April 24-26, 2017, Conference Track Proceedings},
+  publisher    = {OpenReview.net},
+  year         = {2017},
+  url          = {https://openreview.net/forum?id=Skq89Scxx},
+  timestamp    = {Thu, 25 Jul 2019 14:25:58 +0200},
+  biburl       = {https://dblp.org/rec/conf/iclr/LoshchilovH17.bib},
+  bibsource    = {dblp computer science bibliography, https://dblp.org}
 }
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% Old Ones %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
