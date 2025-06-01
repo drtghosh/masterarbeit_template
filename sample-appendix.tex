@@ -1,2 +1,81 @@
-\chapter{VAEBM}\label{sec:vaebm}
-\index{VAEBM}
+\chapter{Additional Qualitative Results}\label{ch:additional_qual}
+
+
+
+\chapter{Example Effect of Non-zero Prior Mean in GP}\label{ch:nonzerogp}
+Consider two non-similar points $x_1$ and $x_2$ with $k(x_1, x_2) = 0$ for some covariance or kernel function $k$. Therefore, the covariance matrix can be written as \[\left[\begin{array}{cc}
+   1 & 0 \\
+   0 & 1
+\end{array}\right].\]We also observe the function values at $x_1$ and $x_2$ to be $0$ and $1$, respectively. We assume a prior mean of $1$, that is $m(x)=1$. Now, consider a new point $x^*$ more similar to $x_1$ than $x_2$, such that $k(x^*, x_1)=0.9, k(x^*, x_2)=0.1$. Then from Eq~\ref{GPPosterior}, we can compute the posterior mean at $x^*$ given $\mathbf{X}=[x_1, x_2]^T$ as:
+{\small\begingroup
+\renewcommand{\arraystretch}{1.25}
+\setlength\arraycolsep{2.5pt}
+\begin{align}
+    m\left(x^*\right)+k\left(x^*, \mathbf{X}\right) k\left(\mathbf{X}, \mathbf{X}\right)^{-1}\left(\mathbf{Y}-m\left(\mathbf{X}\right)\right) & = 1 + [0.9 \hspace{5pt} 0.1] \left[\begin{array}{cc}
+        1 & 0 \\
+        0 & 1
+    \end{array}\right]^{-1} \left(\left[\begin{array}{c}
+        0\\
+        1
+        \end{array}\right] -
+        \left[\begin{array}{c}
+        1\\
+        1
+        \end{array}\right]
+        \right)\\
+        &= 1 + [0.9 \hspace{5pt} 0.1] \left[\begin{array}{cc}
+        1 & 0 \\
+        0 & 1
+    \end{array}\right] \left[\begin{array}{c}
+        -1\\
+        0
+        \end{array}\right]\\
+        &= 1 + [0.9 \hspace{5pt} 0.1] \left[\begin{array}{c}
+        -1\\
+        0
+        \end{array}\right]\\
+        &= 1 + 0.9\cdot (-1) + 0.1 \cdot 0\\
+        &= 1 -0.9\\
+        &= 0.1,
+\end{align}
+\endgroup
+}
+which is close to $0$ as expected since $x^*$ is similar to $x_1$ where the function value is $0$.
+
+Now, if we consider another point $\hat{x}$ close to $x_2$, such that $k(\hat{x}, x_1)=0.05$ and $k(x^*, x_2)=0.95$. Then from Eq~\ref{GPPosterior}, we can compute the posterior mean at $x^*$ given $\mathbf{X}=[x_1, x_2]^T$ as:
+{\small\begingroup
+\renewcommand{\arraystretch}{1.25}
+\setlength\arraycolsep{2.5pt}
+\begin{align}
+    m\left(\hat{x}\right)+k\left(\hat{x}, \mathbf{X}\right) k\left(\mathbf{X}, \mathbf{X}\right)^{-1}\left(\mathbf{Y}-m\left(\mathbf{X}\right)\right) & = 1 + [0.05 \hspace{5pt} 0.95] \left[\begin{array}{cc}
+        1 & 0 \\
+        0 & 1
+    \end{array}\right]^{-1} \left(\left[\begin{array}{c}
+        0\\
+        1
+        \end{array}\right] -
+        \left[\begin{array}{c}
+        1\\
+        1
+        \end{array}\right]
+        \right)\\
+        &= 1 + [0.05 \hspace{5pt} 0.95] \left[\begin{array}{cc}
+        1 & 0 \\
+        0 & 1
+    \end{array}\right] \left[\begin{array}{c}
+        -1\\
+        0
+        \end{array}\right]\\
+        &= 1 + [0.05 \hspace{5pt} 0.95] \left[\begin{array}{c}
+        -1\\
+        0
+        \end{array}\right]\\
+        &= 1 + 0.05\cdot (-1) + 0.95 \cdot 0\\
+        &= 1 -0.05\\
+        &= 0.95,
+\end{align}
+\endgroup
+}
+which is close to $1$ as expected since $\hat{x}$ is similar to $x_2$ where the observed function value is $1$.
+
+%\index{VAEBM}
