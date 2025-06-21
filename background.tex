@@ -56,7 +56,7 @@ Although the Bayesian formulation provides a mathematically sound and comprehens
         \caption{MC DropConnect}
         \label{fig:mcdrop3}
       \end{subfigure}
-      \caption{Model Uncertainty quantification using Monte Carlo dropout or DropConnect.}
+      \caption{Model uncertainty quantification using Monte Carlo dropout or DropConnect.}
       \label{fig:mcdrop}
     \end{figure}
     Dropout was introduced by~\cite{DropoutOG} as a stochastic regularization technique in NNs to prevent overfitting. By the properties of how dropout (randomly dropping out hidden units of inner layers in NN) is implemented, it also allows one to efficiently combine exponentially many different NNs without extra cost~\cite{DropoutOG}. Mathematically, for an input $x \in \mathbb{R}^d$ and a weight matrix $W\in \mathbb{R}^{d \times d'}$, a masking vector $m \in \mathbb{R}^{d'}$ is sampled whose each element is sampled independently from a Bernoulli distribution with some chosen probability $p$, then the hidden layer can be computed with activation function $a$ as $h = m \star a(Wx)$, where $\star$ refers to element-wise multiplication in this work.

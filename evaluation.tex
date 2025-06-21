@@ -6,12 +6,10 @@
 
 
     \subsection{Datasets}
-    Two different synthetic datasets were used to train our proposed models. Synthetic datasets were chosen due to their completeness, which was essential for the methods to work. The problem of surface reconstruction with uncertainty quantification from just partial point clouds is already quite challenging, uncertain, and underdetermined. Further lack of information, such as missing regions in ground truth data, would have made it extremely difficult to learn even the surface reconstruction. Uncertainty quantification would be an added challenge. 
+    A popular synthetic dataset was used to train our proposed models. A synthetic dataset was chosen due to its completeness, which was essential for the methods to work. The problem of surface reconstruction with uncertainty quantification from just partial point clouds is already quite challenging, uncertain, and underdetermined. Further lack of information, such as missing regions in ground truth data, would have made it extremely difficult to learn even the surface reconstruction. Uncertainty quantification would be an added challenge. 
     \newline
     
-    One of the datasets used was generated from the popular synthetic 3D point cloud dataset ShapeNet~\cite{ShapeNet}. The same procedure and data split used in ~\cite{PCN} were followed. The dataset is created from CAD models of 8 different categories of objects: airplane, cabinet, car, chair, lamp, sofa, table, and vessel. There are 30974 models in total, out of which 28794 are used for training. For each model used in training, there is one complete point cloud consisting of 16384 points sampled uniformly on the surfaces defined by the meshes, and 8 different partial point clouds with varying point counts corresponding to 8 randomly distributed viewpoints. Due to resource constraints, 2048 points out of 16384 were selected to represent the complete shapes. Farthest point sampling was used to select the points for complete clouds. For partial clouds, a maximum of 1024 points was used for learning unless specified otherwise. Out of the remaining 2000 models, 800 were used for validation and 1200 for testing. The validation and test data were equally distributed across different categories, with 100 samples each for validation and 150 samples each for testing. 
-    \\
-    The second dataset used in the experiments was employed to benchmark different methods for building point cloud completion, as introduced in~\cite{BuildingPCC}. The dataset comprises approximately 50,000 building models from The Hague and Rotterdam in the Netherlands. It contains 29,999 training samples, with each complete sample corresponding to 2 viewpoint partial scans, 9,998 validation samples, and 10,000 testing samples. 
+    The dataset used was generated from the popular synthetic 3D point cloud dataset ShapeNet~\cite{ShapeNet}. The same procedure and data split used in ~\cite{PCN} were followed. The dataset is created from CAD models of 8 different categories of objects: airplane, cabinet, car, chair, lamp, sofa, table, and vessel. There are 30974 models in total, out of which 28794 are used for training. For each model used in training, there is one complete point cloud consisting of 16384 points sampled uniformly on the surfaces defined by the meshes, as well as 8 different partial point clouds with varying point counts corresponding to 8 randomly distributed viewpoints. Due to resource constraints, 2048 points out of 16384 were selected to represent the complete shapes. Farthest point sampling was used to select the points for complete clouds. For partial clouds, a maximum of 1024 points was used for learning unless specified otherwise. Out of the remaining 2000 models, 800 were used for validation and 1200 for testing. The validation and test data were equally distributed across different categories, with 100 samples each for validation and 150 samples each for testing. 
 
 
     \subsection{Model Architectures}
@@ -177,6 +175,77 @@
 
         As seen in Figure~\ref{fig:zairplanezz}, the DropConnect-based model again generated shapes inconsistent with the ground truth. However, across all the models, a common pattern can be observed in the uncertainty map for different sample sizes ($M$). As the numbers of clouds generated were increased, the regions with simpler geometry became less varied. However, the complex geometric regions in the produced clouds became more diverse as more samples were generated. Unfortunately, that resulted in undesired spurious geometries. On the other hand, if too few generated clouds are used to create the uncertainty map, the diversity is not enough. A trade-off can be found for $M$ = 10, which is the value used in all our other experiments, unless stated otherwise.
 
+        \subsubsection{Effect of Partial Data Availability}
+        A comparison between the uncertainty maps produced by implicit generation for different sizes of an input partial point cloud is shown in Figure~\ref{fig:partialpercentchair} for a randomly selected example from the chair subcategory of the ShapeNet dataset. For input sizes ($N_P$) of 128, 256, 512, and 1024, 10 different completions were produced, and uncertainty maps were computed using linear assignment matching between the generated clouds.
+        \begin{figure}[htb]
+          \centering
+          \begin{subfigure}[t]{\dimexpr0.315\textwidth+20pt\relax}
+            \makebox[20pt]{\raisebox{30pt}{\rotatebox[origin=c]{90}{\small $N_P=128$}}}%
+            \includegraphics[width=\dimexpr\linewidth-20pt\relax]{figures/percent/128_part.png}
+            \makebox[20pt]{\raisebox{30pt}{\rotatebox[origin=c]{90}{\small $N_P=256$}}}%
+            \includegraphics[width=\dimexpr\linewidth-20pt\relax]{figures/percent/256_part.png}
+            \makebox[20pt]{\raisebox{30pt}{\rotatebox[origin=c]{90}{\small $N_P=512$}}}%
+            \includegraphics[width=\dimexpr\linewidth-20pt\relax]{figures/percent/512_part.png}
+            \makebox[20pt]{\raisebox{30pt}{\rotatebox[origin=c]{90}{\small $N_P=1024$}}}%
+            \includegraphics[width=\dimexpr\linewidth-20pt\relax]{figures/percent/1024_part.png}
+            \caption{Partial cloud}\label{fig:partialpercentchair1}
+          \end{subfigure}\hfill
+          \begin{subfigure}[t]{0.315\textwidth}
+            \includegraphics[width=\textwidth]{figures/percent/128_umap_edited.png}
+            \includegraphics[width=\textwidth]{figures/percent/256_umap_edited.png}
+            \includegraphics[width=\textwidth]{figures/percent/512_umap_edited.png}
+            \includegraphics[width=\textwidth]{figures/percent/1024_umap_edited.png}
+            \caption{Uncertainty map}\label{fig:partialpercentchair2}
+          \end{subfigure}\hfill
+          \begin{subfigure}[t]{0.315\textwidth}
+            \includegraphics[width=\textwidth]{figures/percent/chair_comp.png}
+            \includegraphics[width=\textwidth]{figures/percent/chair_comp.png}
+            \includegraphics[width=\textwidth]{figures/percent/chair_comp.png}
+            \includegraphics[width=\textwidth]{figures/percent/chair_comp.png}
+            \caption{Ground truth}\label{fig:partialpercentchair3}
+          \end{subfigure}
+          \caption{Qualitative comparison of uncertainty maps predicted using the implicit generative model based on the size of input partial point cloud for completion on the chair subcategory of ShapeNet data.}
+          \label{fig:partialpercentchair}
+        \end{figure}
+        \newline
+
+        As observed in Figure~\ref{fig:partialpercentchair2}, as the number of points in the partial cloud increases, the uncertainty decreases in the regions where more data are available. This is evident from the region in the chair encircled by the red dotted ellipse. Moreover, the predicted shape becomes more similar to the ground truth as more points in the input cloud are available (see the region encircled by the white dotted ellipse).
+
+        \subsubsection{Index-wise versus Linear Assignment-based Matching}
+        A comparison between the two possible ways uncertainty maps can be produced from the generated complete clouds is shown in Figure~\ref{fig:matchingwar} for randomly selected examples from the airplane or table subcategory of the ShapeNet dataset. For each input partial cloud, 10 different completions were produced, and uncertainty maps were computed either by using the entries in the same index from the generated clouds or by using linear assignment matching between the generated clouds. The uncertainty maps shown in Figure~\ref{fig:matchingwar1} were produced from implicit generation, in Figure~\ref{fig:matchingwar2} from the dropout-based method, and in Figure~\ref{fig:matchingwar3} from an ensemble of generators.
+        \begin{figure}[htb]
+          \centering
+          \begin{subfigure}[t]{\dimexpr0.315\textwidth+20pt\relax}
+            \makebox[20pt]{\raisebox{30pt}{\rotatebox[origin=c]{90}{\small Input}}}%
+            \includegraphics[width=\dimexpr\linewidth-20pt\relax]{figures/part_ap1.png}
+            \makebox[20pt]{\raisebox{30pt}{\rotatebox[origin=c]{90}{\small Indexed}}}%
+            \includegraphics[width=\dimexpr\linewidth-20pt\relax]{figures/iml_ind_ap1.png}
+            \makebox[20pt]{\raisebox{30pt}{\rotatebox[origin=c]{90}{\small Assigned}}}%
+            \includegraphics[width=\dimexpr\linewidth-20pt\relax]{figures/iml_lin_ap1.png}
+            \makebox[20pt]{\raisebox{30pt}{\rotatebox[origin=c]{90}{\small GT}}}%
+            \includegraphics[width=\dimexpr\linewidth-20pt\relax]{figures/com_ap1.png}
+            \caption{Implicit}\label{fig:matchingwar1}
+          \end{subfigure}\hfill
+          \begin{subfigure}[t]{0.315\textwidth}
+            \includegraphics[width=\textwidth]{figures/part_t1.png}
+            \includegraphics[width=\textwidth]{figures/do_ind_t1.png}
+            \includegraphics[width=\textwidth]{figures/do_lin_t1.png}
+            \includegraphics[width=\textwidth]{figures/com_t1.png}
+            \caption{Dropout}\label{fig:matchingwar2}
+          \end{subfigure}\hfill
+          \begin{subfigure}[t]{0.315\textwidth}
+            \includegraphics[width=\textwidth]{figures/part_ap3.png}
+            \includegraphics[width=\textwidth]{figures/ens_ind_ap3.png}
+            \includegraphics[width=\textwidth]{figures/ens_lin_ap3.png}
+            \includegraphics[width=\textwidth]{figures/com_ap3.png}
+            \caption{Ensemble}\label{fig:matchingwar3}
+          \end{subfigure}
+          \caption{Qualitative comparison of uncertainty maps produced by index-wise computation (Indexed) or linear assignment matching (Assigned) for completion on different subcategories of ShapeNet data and for different models used.}
+          \label{fig:matchingwar}
+        \end{figure}
+        \newline
+
+        From the Figure~\ref{fig:matchingwar}, it is evident that the linear assignment matching produces more plausible uncertainty maps, which is expected. For index-wise computation, regions with simpler geometry often remain more uncertain, which is undesirable. Linear assignment matching fixed such issues. Moreover, even in regions where input data is available, naive uncertainty maps can show unnecessarily high uncertainty due to incorrect matching, whereas linear assignment matching addresses such occurrences correctly.
 
     \subsection{Quantitative Comparison}
     
@@ -282,7 +351,73 @@
 
 
 \section{Evaluation of Implicit Representation-based Empirical Method}
+    The original approach of learning to generate conditional implicit representations with randomness was not successful. There are multiple possible reasons behind this outcome. Firstly, due to resource and time constraints, it was not feasible to use the original architecture used in previous works for implicit representation learning from unoriented point clouds. Success of such methods depends significantly on precise architectures, parameter initialization, and hyperparameter tuning, which are quite costly. Even with proven initializations and hyperparameter values selected from previous works, the modified model was unable to learn the shape space conditioned on partial data.
+    \\
+    After investigating the learning process, it was found that the model overfits in a specific manner to minimize the overall loss without affecting the Eikonal loss or the Hessian term. The learned function basically predicts a small enough value everywhere so that the manifold loss is minimized, and the non-manifold loss is not too high. The Eikonal term is completely ignored, with the normal being close to zero everywhere. Consequently, the Hessian term also vanishes. This is evident from the Figure~\ref{fig:hessianfail} shown in Appendix~\ref{ch:additional_qual}. With further modification of the hyperparameters, this issue can be resolved, but it was not possible to implement this within the limited means of this work. Previous works~\cite{DiGS, NeuralHessian} show that even with complete cloud available, learning the implicit representations for the shape space is quite challenging, and the results are not satisfactory. Therefore, it is quite plausible that this method failed for this even more complex learning process, which involves conditioning on partial data and added randomness. 
     
+    One simple alternative approach, as mentioned earlier, would be to learn the implicit representation for each generated complete shape from an input partial point cloud. Then, from the resulting implicit functions, an average surface can be empirically estimated, along with its associated uncertainty. Unfortunately, even with the state-of-the-art implicit representation learning methods for unoriented point clouds, the resulting reconstructed surfaces are spurious and not watertight (see Figure~\ref{fig:pccinr}). This was due to the fact that the completion methods were only able to produce 2048 points per complete cloud, which is often not dense enough for the implicit representation learning methods. An example of various reconstructed surfaces from different completed clouds for a randomly selected test data from the cabinet subcategory of the ShapeNet dataset is shown in Figure~\ref{fig:pccinr}. 
+
+    \begin{figure}[htb]
+        \centering
+        \begin{subfigure}{0.19\textwidth}
+            \includegraphics[width=\linewidth]{figures/inr_cabinet/part_cabi.png}
+            \caption{Partial cloud}
+        \end{subfigure}
+        \hfill
+        \begin{subfigure}{0.19\textwidth}
+            \includegraphics[width=\linewidth]{figures/inr_cabinet/cabi_inr5.png}
+            \caption{Recon 1}
+        \end{subfigure}
+        \hfill
+        \begin{subfigure}{0.19\textwidth}
+            \includegraphics[width=\linewidth]{figures/inr_cabinet/cabi_inr8.png}
+            \caption{Recon 2}
+        \end{subfigure}
+        \hfill
+        \begin{subfigure}{0.19\textwidth}
+            \includegraphics[width=\linewidth]{figures/inr_cabinet/cabi_inr9.png}
+            \caption{Recon 3}
+        \end{subfigure}
+        \hfill
+        \begin{subfigure}{0.19\textwidth}
+            \includegraphics[width=\linewidth]{figures/inr_cabinet/comp_cabi.png}
+            \caption{Ground Truth}
+        \end{subfigure}
+        \hfill
+        \caption{Surface reconstructions by learning multiple possible implicit representations from corresponding complete clouds generated for an input partial cloud. Recon $i$ denotes the $i$-th possible surface reconstructed from the generated complete cloud.}
+        \label{fig:pccinr}
+    \end{figure}
 
 
 \section{Evaluation of Gaussian Process-based Method}
+The results presented in this section are based solely on the implicit function described by a Gaussian process conditioned on partial cloud data, where contrastive learning-based feature embedding was employed prior to computing the GP posterior. Likelihood-based embedding learning was possible for smaller datasets where the dimensionality of the covariance matrix is limited to a certain extent. Some instances of this are presented in Figure~\ref{fig:2dgp} of Appendix~\ref{ch:additional_qual}. When dealing with larger point cloud data, numerical precision becomes a decisive factor in computing likelihood. Therefore, the contrastive learning-based priors were considered.
+\\
+Some examples of surface reconstruction from just a partial point cloud using contrastive learning-based feature embedding and a Gaussian process are shown in Figure~\ref{fig:gptable}. The GP posterior mean represents the surface (more specifically, the implicit function). The prior mean was set to 1. A $128^3$ sized grid was created around the input cloud, and the implicit function values were predicted using GP. The posterior means at those grid points were then used to perform marching cubes to obtain the reconstructed surface. It can be observed that contrastive learning-induced GP works quite well for surface reconstruction from partial clouds. However, the aspect of uncertainty quantification still remains an issue.   
+\begin{figure}[htb]
+  \centering
+  \begin{subfigure}[t]{0.315\textwidth}
+    \includegraphics[width=\textwidth]{figures/gp/t1pgp.png}
+    \includegraphics[width=\textwidth]{figures/gp/t2pgp.png}
+    \includegraphics[width=\textwidth]{figures/gp/t3pgp.png}
+    \caption{Input}\label{fig:gptable1}
+  \end{subfigure}\hfill
+  \begin{subfigure}[t]{0.315\textwidth}
+    \includegraphics[width=\textwidth]{figures/gp/t1gp.png}
+    \includegraphics[width=\textwidth]{figures/gp/t2gp.png}
+    \includegraphics[width=\textwidth]{figures/gp/t3gp.png}
+    \caption{GP Posterior}\label{fig:gptable2}
+  \end{subfigure}\hfill
+  \begin{subfigure}[t]{0.315\textwidth}
+    \includegraphics[width=\textwidth]{figures/gp/t1cgp.png}
+    \includegraphics[width=\textwidth]{figures/gp/t2cgp.png}
+    \includegraphics[width=\textwidth]{figures/gp/t3cgp.png}
+    \caption{GT}\label{fig:gptable3}
+  \end{subfigure}
+  \caption{Surface reconstructions from implicit functions modeled by Gaussian process posterior mean from partial cloud inputs on randomly selected examples of the table subcategory of ShapeNet data.}
+  \label{fig:gptable}
+\end{figure}
+\newline
+
+Gaussian process was specifically adopted since it can provide a full stochastic formulation of our predictions. Unfortunately, the posterior covariance computation has an inherent problem in this setting. Since only the points from the partial cloud can be used for GP modeling in this task, the entries of the prior covariance matrix are based on those points, and no other supervision is available from non-manifold points. Contrastive learning maps the manifold points to similar embeddings; therefore, the entries in the covariance matrix are almost identical. This makes the matrix ill-conditioned, which causes numerical instability during inverse computation and therefore jeopardizes the posterior covariance computation.
+\\
+Even if the covariance matrix is sometimes non-singular or numerically stable, the variance at the vertices of the reconstructed mesh must be interpolated from the grid points where the GP posterior was computed. This leads to even more approximation and numerical errors, leading to non-existent or erroneous uncertainty values.

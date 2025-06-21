@@ -56,7 +56,7 @@ In this section, a solution to the Problem~\ref{DataCloud} is proposed utilizing
           \begin{center}
           \includegraphics[width=\linewidth]{figures/implicit_gen_network.png}
           \end{center}
-          \caption{Network for point cloud completion uncertainty quantification using conditional implicit generation. During inference, we sample noise from a standard Gaussian distribution multiple times and generate encodings based on the different noises.}\label{fig:implicit_net}
+          \caption{Network for point cloud completion uncertainty quantification using conditional implicit generation. During inference, noise is sampled from a standard Gaussian distribution multiple times, and encodings are generated based on the different noises.}\label{fig:implicit_net}
         \end{figure}
         Another possible method to generate non-deterministic predictions from an input is to add random noise to the input before passing it to the generator. Eq.~\ref{IGM} can be reformulated for conditional implicit generative models as:
         \begin{equation}\label{IGM}
@@ -94,7 +94,7 @@ In this section, a solution to the Problem~\ref{DataCloud} is proposed utilizing
           \begin{center}
           \includegraphics[width=\linewidth]{figures/implicit_gen_network_imle.png}
           \end{center}
-          \caption{IMLE.}\label{fig:imle}
+          \caption{Training network for point cloud completion uncertainty quantification using conditional implicit maximum likelihood estimation. During training, not all encodings generated from G are compared with the complete cloud encoding $\mathbf{y}$. Only the closest encoding is selected during training.}\label{fig:imle}
         \end{figure}
         Training differs according to the method selected for uncertainty quantification (more precisely, methods for inducing randomness) to produce different complete shapes. If dropout or DropConnect is used, the training procedure becomes quite straightforward. The same general structure for point completion depicted in Figure~\ref{fig:gen_net} is followed with the generator $G$ using dropout or DropConnect during training. If an ensemble of generators with $M$ models is used, then each generator needs to be trained individually, resulting in $M$ different training sequences similar to the procedure shown in Figure~\ref{fig:ens_net}. In this case, the inference and training follow the same pattern. 
         \newline
@@ -141,7 +141,7 @@ In this section, a solution to the Problem~\ref{DataCloud} is proposed utilizing
       \begin{center}
       \includegraphics[width=\linewidth]{figures/matching_edited.png}
       \end{center}
-      \caption{Linear assignment for matching between a pair of generated point clouds. For each point in the green cloud, we find the closest point in the purple cloud based on some cost function. Notice that the representative indices of the matched points are different in the respective tensors of the generated clouds.}\label{fig:matching}
+      \caption{Linear assignment for matching between a pair of generated point clouds. For each point in the green cloud, the closest point in the purple cloud is located based on some cost function. Notice that the representative indices of the matched points are different in the respective tensors of the generated clouds.}\label{fig:matching}
     \end{figure}
     Rather than naively computing the index-wise mean and variance of the 3D coordinates of the generated complete clouds, the point sets can be matched between themselves as one-to-one mappings of points. Such matchings between two point clouds can be computed using a minimum-weight matching or linear assignment with an appropriate cost of matching a point from one cloud to a point in another. Hungarian matching algorithm~\cite{Hungarian} or a modified version of Jonker-Volgenant algorithm~\cite{RectAssign} were applied to perform the matching between clouds. Euclidean distance between points was used as the cost function. One of the generated complete clouds was selected at random, and one-to-one mappings with points in the remaining complete clouds were identified. The resulting matching was then used to compute the mean and variance estimations of the predicted complete point cloud.
 
